@@ -1,26 +1,59 @@
 import { eq } from "drizzle-orm";
 import { createMiddleware, createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { deleteObject, getObject, putObject } from "@/app/s3-helper";
-import { dbUserSchema, zodLockKeySchema, zodUserIdSchema, zodUserSchema } from "@/app/db-schema";
+import { dbUserSchema, zodUserIdSchema, zodUserSchema } from "@/app/db-schema";
 import { environment, s3Path, STATUS_CODES, STATUS_MESSAGES } from "@/app/constants";
 import { db, logger, redis } from "@/app/config";
 
 // middleware:-
-const middleware = createMiddleware({ type: 'function' })
+const redisKey = (getKey: (data: any) => string) => createMiddleware({ type: 'function' })
   .server(async ({ next, data }) => {
+    const request = getRequest();
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+
+    return next({
+      sendContext: {
+        lockKey: `${environment}:lock:${getKey(data)}`,
+        rateLimitKey: `${environment}:rate:${ip}`,
+      },
+    });
+  });
+
+const middleware = createMiddleware({ type: 'function' })
+  .server(async ({ next, data, context }) => {
     const requestTime = performance.now();
     const requestId = crypto.randomUUID();
-    const lockKey = (data as any).lockKey;
-    const isAllowed = await redis.set(`${environment}:lock:${lockKey}`, '1', 'PX', 2000, 'NX');
+    const lockKey = (context as any).lockKey;
+    const rateLimitKey = (context as any).rateLimitKey;
+    const isNotLocked = await redis.set(lockKey, '1', 'PX', 2000, 'NX');
+    const requestCount = await redis.incr(rateLimitKey);
+    if (requestCount === 1) await redis.expire(rateLimitKey, 6);
 
-    if (isAllowed) {
-      logger.info('Request received', { requestId: crypto.randomUUID(), lockKey, input: data });
+    if (isNotLocked && requestCount < 5) {
+      logger.info({
+        message: 'Request received',
+        requestId,
+        lockKey,
+        input: data,
+      });
       const output = await next();
-      logger.info('Response sent', { requestId, lockKey, output, responseTime: Math.round(performance.now() - requestTime) });
+      logger.info({
+        message: 'Response sent',
+        requestId,
+        lockKey,
+        executionTime: Math.round(performance.now() - requestTime),
+        output: (output as any).result,
+      });
       return output;
     }
     else {
-      logger.warn('Lock conflict, request rejected', { requestId, lockKey });
+      logger.warn({
+        message: 'Lock conflict or rate limit reached, request rejected',
+        requestId,
+        lockKey,
+        rateLimitKey
+      });
       return {
         status_code: STATUS_CODES.CONFLICT,
         message: STATUS_MESSAGES.SERVER_ERROR_CONFLICT,
@@ -31,11 +64,10 @@ const middleware = createMiddleware({ type: 'function' })
 
 // functions:-
 export const saveUserFn = createServerFn({ method: 'POST' })
-  .middleware([middleware])
-  .inputValidator(zodUserSchema.extend(zodLockKeySchema.shape))
-  .handler(async ({ data }) => {
+  .middleware([redisKey((d) => `save-user:${d.email}`), middleware])
+  .inputValidator(zodUserSchema)
+  .handler(async ({ data: payload }) => {
     try {
-      const { lockKey, ...payload } = data;
       const fileName = crypto.randomUUID();
       await putObject(`${s3Path}/${fileName}.json`, payload);
       await db.insert(dbUserSchema).values({ ...payload, id: fileName }).returning();
@@ -83,11 +115,10 @@ export const getUserFn = createServerFn({ method: 'GET' })
   });
 
 export const updateFn = createServerFn({ method: 'POST' })
-  .middleware([middleware])
-  .inputValidator(zodUserSchema.extend({ ...zodUserIdSchema.shape, ...zodLockKeySchema.shape }))
-  .handler(async ({ data }) => {
+  .middleware([redisKey((d) => `update-user:${d.id}`), middleware])
+  .inputValidator(zodUserSchema.extend(zodUserIdSchema.shape))
+  .handler(async ({ data: payload }) => {
     try {
-      const { lockKey, ...payload } = data;
       await putObject(`${s3Path}/${payload.id}.json`, payload);
       await db.update(dbUserSchema).set(payload).where(eq(dbUserSchema.id, payload.id));
       return {
@@ -106,8 +137,8 @@ export const updateFn = createServerFn({ method: 'POST' })
   });
 
 export const deleteFn = createServerFn({ method: 'POST' })
-  .middleware([middleware])
-  .inputValidator(zodUserIdSchema.extend(zodLockKeySchema.shape))
+  .middleware([redisKey((d) => `delete-user:${d.id}`), middleware])
+  .inputValidator(zodUserIdSchema)
   .handler(async ({ data }) => {
     try {
       await deleteObject(`${s3Path}/${data.id}.json`);

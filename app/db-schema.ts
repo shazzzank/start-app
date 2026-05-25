@@ -33,10 +33,6 @@ export const zodUserIdSchema = z.object({
   id: z.string()
 });
 
-export const zodLockKeySchema = z.object({
-  lockKey: z.string().min(1)
-});
-
 export const dbUserSchema = pgTable(`${TABLE_PREFIX}users`, {
   id: varchar('id', { length: 64 }).primaryKey(),
   mb_user_id: integer('mb_user_id').notNull(),

@@ -3,10 +3,10 @@ import { saveUserFn } from '@/app/api-helper';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import Toast from '@/app/components/toast';
 
-export const Route = createFileRoute('/create/quiz')({
+export const Route = createFileRoute('/create/user')({
   component: () => {
     const [toast, setToast] = useState({});
-    const navigate = useNavigate({ from: '/create/quiz' });
+    const navigate = useNavigate({ from: '/create/user' });
     async function onSubmit() {
       const payload = {
         "mb_user_id": 1024,
@@ -30,7 +30,9 @@ export const Route = createFileRoute('/create/quiz')({
       const response = await saveUserFn({ data: payload });
       (response.status_code === 200) ? (
         navigate({ to: '/' })
-      ) : setToast({ message: 'Something went wrong. Please try later', error: true });
+      ) : (
+        setToast({ message: 'Something went wrong. Please try later', error: true })
+      );
     }
     return (
       <>
