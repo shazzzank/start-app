@@ -2,4 +2,4 @@
 logs
 node_modules
 pnpm-lock.yaml
-
+src/routeTree.gen.ts
