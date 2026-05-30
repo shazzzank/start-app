@@ -18,7 +18,6 @@ export const Route = createRootRoute({
     </div>
   ),
   errorComponent: ({ error }: { error: Error }) => {
-    console.log('Error in the route rendering: ', error);
     return (
       <div className='flex justify-center items-center h-screen w-screen'>
         <h1 className='text-4xl font-medium'>Something went wrong. Please try again later</h1>

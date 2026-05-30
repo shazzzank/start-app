@@ -2,15 +2,16 @@ import { useState } from 'react';
 import { saveUserFn } from '@/app/api-helper';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import Toast from '@/app/components/toast';
+import Form from '@/app/components/form';
 
 export const Route = createFileRoute('/create/user')({
   component: () => {
     const [toast, setToast] = useState({});
     const navigate = useNavigate({ from: '/create/user' });
-    async function onSubmit() {
+    async function onSubmit(data: any) {
+      console.log({ ...data, mb_user_id: 1024, mb_org_id: 12 });
+      return;
       const payload = {
-        "mb_user_id": 1024,
-        "mb_org_id": 12,
         "email": "rahul.sharma@example.com",
         "phone": "9876543210",
         "dob": "1998-06-15",
@@ -37,8 +38,7 @@ export const Route = createFileRoute('/create/user')({
     return (
       <>
         <Toast toast={toast} setToast={setToast} />
-        <h2 className='bg-zinc-400'>Home</h2>
-        <button type='button' onClick={onSubmit}>Create</button>
+        <Form onSubmit={onSubmit} />
       </>
     );
   }
