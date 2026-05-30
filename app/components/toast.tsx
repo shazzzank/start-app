@@ -15,8 +15,7 @@ export default function Toast({ toast, setToast }: {
   }, [toast]);
 
   useEffect(() => {
-    if (!toast.message) { setV(false); return; }
-    setV(true);
+    (toast.message) ? setV(true) : setV(false);
   }, [toast.message]);
 
   useEffect(() => {

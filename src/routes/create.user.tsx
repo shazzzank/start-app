@@ -8,33 +8,16 @@ export const Route = createFileRoute('/create/user')({
   component: () => {
     const [toast, setToast] = useState({});
     const navigate = useNavigate({ from: '/create/user' });
+
     async function onSubmit(data: any) {
-      console.log({ ...data, mb_user_id: 1024, mb_org_id: 12 });
-      return;
-      const payload = {
-        "email": "rahul.sharma@example.com",
-        "phone": "9876543210",
-        "dob": "1998-06-15",
-        "name": "Rahul Sharma",
-        "gender": "male",
-        "demographic_status": "urban",
-        "state_id": 7,
-        "city_id": 101,
-        "ulb_id": 45,
-        "block_id": null,
-        "village_id": null,
-        "gram_panchayat_id": null,
-        "pincode": "110001",
-        "is_divyang": false,
-        "role": "player"
-      };
-      const response = await saveUserFn({ data: payload });
+      const response = await saveUserFn({ data: { ...data, mb_user_id: 1024, mb_org_id: 12 } });
       (response.status_code === 200) ? (
         navigate({ to: '/' })
       ) : (
         setToast({ message: 'Something went wrong. Please try later', error: true })
       );
     }
+
     return (
       <>
         <Toast toast={toast} setToast={setToast} />

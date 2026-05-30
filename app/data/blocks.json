@@ -1,0 +1,422 @@
+[
+  {
+    "lgd_code": 1,
+    "name": "Amber",
+    "district_lgd_code": 812
+  },
+  {
+    "lgd_code": 2,
+    "name": "Andhi",
+    "district_lgd_code": 812
+  },
+  {
+    "lgd_code": 3,
+    "name": "Bagru",
+    "district_lgd_code": 812
+  },
+  {
+    "lgd_code": 4,
+    "name": "Bassi",
+    "district_lgd_code": 812
+  },
+  {
+    "lgd_code": 5,
+    "name": "Chaksu",
+    "district_lgd_code": 812
+  },
+  {
+    "lgd_code": 6,
+    "name": "Chomu",
+    "district_lgd_code": 812
+  },
+  {
+    "lgd_code": 7,
+    "name": "Dudu",
+    "district_lgd_code": 812
+  },
+  {
+    "lgd_code": 8,
+    "name": "Govindgarh",
+    "district_lgd_code": 812
+  },
+  {
+    "lgd_code": 9,
+    "name": "Jamwa Ramgarh",
+    "district_lgd_code": 812
+  },
+  {
+    "lgd_code": 10,
+    "name": "Kotkhawda",
+    "district_lgd_code": 812
+  },
+  {
+    "lgd_code": 11,
+    "name": "Phagi",
+    "district_lgd_code": 812
+  },
+  {
+    "lgd_code": 12,
+    "name": "Sanganer",
+    "district_lgd_code": 812
+  },
+  {
+    "lgd_code": 13,
+    "name": "Shahpura",
+    "district_lgd_code": 812
+  },
+  {
+    "lgd_code": 14,
+    "name": "Toonga",
+    "district_lgd_code": 812
+  },
+  {
+    "lgd_code": 15,
+    "name": "Viratnagar",
+    "district_lgd_code": 812
+  },
+  {
+    "lgd_code": 16,
+    "name": "Balesar",
+    "district_lgd_code": 815
+  },
+  {
+    "lgd_code": 17,
+    "name": "Bhopalgarh",
+    "district_lgd_code": 815
+  },
+  {
+    "lgd_code": 18,
+    "name": "Bilara",
+    "district_lgd_code": 815
+  },
+  {
+    "lgd_code": 19,
+    "name": "Dechu",
+    "district_lgd_code": 815
+  },
+  {
+    "lgd_code": 20,
+    "name": "Jodhpur",
+    "district_lgd_code": 815
+  },
+  {
+    "lgd_code": 21,
+    "name": "Lohawat",
+    "district_lgd_code": 815
+  },
+  {
+    "lgd_code": 22,
+    "name": "Mandore",
+    "district_lgd_code": 815
+  },
+  {
+    "lgd_code": 23,
+    "name": "Osian",
+    "district_lgd_code": 815
+  },
+  {
+    "lgd_code": 24,
+    "name": "Phalodi",
+    "district_lgd_code": 815
+  },
+  {
+    "lgd_code": 25,
+    "name": "Pipar City",
+    "district_lgd_code": 815
+  },
+  {
+    "lgd_code": 26,
+    "name": "Athmalgola",
+    "district_lgd_code": 1028
+  },
+  {
+    "lgd_code": 27,
+    "name": "Bakhtiyarpur",
+    "district_lgd_code": 1028
+  },
+  {
+    "lgd_code": 28,
+    "name": "Barh",
+    "district_lgd_code": 1028
+  },
+  {
+    "lgd_code": 29,
+    "name": "Belchi",
+    "district_lgd_code": 1028
+  },
+  {
+    "lgd_code": 30,
+    "name": "Bikram",
+    "district_lgd_code": 1028
+  },
+  {
+    "lgd_code": 31,
+    "name": "Bihta",
+    "district_lgd_code": 1028
+  },
+  {
+    "lgd_code": 32,
+    "name": "Danapur",
+    "district_lgd_code": 1028
+  },
+  {
+    "lgd_code": 33,
+    "name": "Dhanaruha",
+    "district_lgd_code": 1028
+  },
+  {
+    "lgd_code": 34,
+    "name": "Fatuha",
+    "district_lgd_code": 1028
+  },
+  {
+    "lgd_code": 35,
+    "name": "Ghoswari",
+    "district_lgd_code": 1028
+  },
+  {
+    "lgd_code": 36,
+    "name": "Khusrupur",
+    "district_lgd_code": 1028
+  },
+  {
+    "lgd_code": 37,
+    "name": "Maner",
+    "district_lgd_code": 1028
+  },
+  {
+    "lgd_code": 38,
+    "name": "Masaurhi",
+    "district_lgd_code": 1028
+  },
+  {
+    "lgd_code": 39,
+    "name": "Mokama",
+    "district_lgd_code": 1028
+  },
+  {
+    "lgd_code": 40,
+    "name": "Naubatpur",
+    "district_lgd_code": 1028
+  },
+  {
+    "lgd_code": 41,
+    "name": "Paliganj",
+    "district_lgd_code": 1028
+  },
+  {
+    "lgd_code": 42,
+    "name": "Phulwari",
+    "district_lgd_code": 1028
+  },
+  {
+    "lgd_code": 43,
+    "name": "Punpun",
+    "district_lgd_code": 1028
+  },
+  {
+    "lgd_code": 44,
+    "name": "Amas",
+    "district_lgd_code": 1034
+  },
+  {
+    "lgd_code": 45,
+    "name": "Atri",
+    "district_lgd_code": 1034
+  },
+  {
+    "lgd_code": 46,
+    "name": "Barachatti",
+    "district_lgd_code": 1034
+  },
+  {
+    "lgd_code": 47,
+    "name": "Belaganj",
+    "district_lgd_code": 1034
+  },
+  {
+    "lgd_code": 48,
+    "name": "Bodh Gaya",
+    "district_lgd_code": 1034
+  },
+  {
+    "lgd_code": 49,
+    "name": "Gurua",
+    "district_lgd_code": 1034
+  },
+  {
+    "lgd_code": 50,
+    "name": "Imamganj",
+    "district_lgd_code": 1034
+  },
+  {
+    "lgd_code": 51,
+    "name": "Konch",
+    "district_lgd_code": 1034
+  },
+  {
+    "lgd_code": 52,
+    "name": "Manpur",
+    "district_lgd_code": 1034
+  },
+  {
+    "lgd_code": 53,
+    "name": "Mohanpur",
+    "district_lgd_code": 1034
+  },
+  {
+    "lgd_code": 54,
+    "name": "Sherghati",
+    "district_lgd_code": 1034
+  },
+  {
+    "lgd_code": 55,
+    "name": "Tankuppa",
+    "district_lgd_code": 1034
+  },
+  {
+    "lgd_code": 56,
+    "name": "Tekari",
+    "district_lgd_code": 1034
+  },
+  {
+    "lgd_code": 57,
+    "name": "Wazirganj",
+    "district_lgd_code": 1034
+  },
+  {
+    "lgd_code": 58,
+    "name": "Ambegaon",
+    "district_lgd_code": 2725
+  },
+  {
+    "lgd_code": 59,
+    "name": "Baramati",
+    "district_lgd_code": 2725
+  },
+  {
+    "lgd_code": 60,
+    "name": "Bhor",
+    "district_lgd_code": 2725
+  },
+  {
+    "lgd_code": 61,
+    "name": "Daund",
+    "district_lgd_code": 2725
+  },
+  {
+    "lgd_code": 62,
+    "name": "Haveli",
+    "district_lgd_code": 2725
+  },
+  {
+    "lgd_code": 63,
+    "name": "Indapur",
+    "district_lgd_code": 2725
+  },
+  {
+    "lgd_code": 64,
+    "name": "Junnar",
+    "district_lgd_code": 2725
+  },
+  {
+    "lgd_code": 65,
+    "name": "Khed",
+    "district_lgd_code": 2725
+  },
+  {
+    "lgd_code": 66,
+    "name": "Maval",
+    "district_lgd_code": 2725
+  },
+  {
+    "lgd_code": 67,
+    "name": "Mulshi",
+    "district_lgd_code": 2725
+  },
+  {
+    "lgd_code": 68,
+    "name": "Purandar",
+    "district_lgd_code": 2725
+  },
+  {
+    "lgd_code": 69,
+    "name": "Shirur",
+    "district_lgd_code": 2725
+  },
+  {
+    "lgd_code": 70,
+    "name": "Velhe",
+    "district_lgd_code": 2725
+  },
+  {
+    "lgd_code": 71,
+    "name": "Anekal",
+    "district_lgd_code": 2918
+  },
+  {
+    "lgd_code": 72,
+    "name": "Bengaluru East",
+    "district_lgd_code": 2918
+  },
+  {
+    "lgd_code": 73,
+    "name": "Bengaluru North",
+    "district_lgd_code": 2918
+  },
+  {
+    "lgd_code": 74,
+    "name": "Bengaluru South",
+    "district_lgd_code": 2918
+  },
+  {
+    "lgd_code": 75,
+    "name": "Dasarahalli",
+    "district_lgd_code": 2918
+  },
+  {
+    "lgd_code": 76,
+    "name": "Yeshwanthpur",
+    "district_lgd_code": 2918
+  },
+  {
+    "lgd_code": 77,
+    "name": "Sadar",
+    "district_lgd_code": 926
+  },
+  {
+    "lgd_code": 78,
+    "name": "Bakshi Ka Talab",
+    "district_lgd_code": 926
+  },
+  {
+    "lgd_code": 79,
+    "name": "Chinhat",
+    "district_lgd_code": 926
+  },
+  {
+    "lgd_code": 80,
+    "name": "Gosainganj",
+    "district_lgd_code": 926
+  },
+  {
+    "lgd_code": 81,
+    "name": "Kakori",
+    "district_lgd_code": 926
+  },
+  {
+    "lgd_code": 82,
+    "name": "Malihabad",
+    "district_lgd_code": 926
+  },
+  {
+    "lgd_code": 83,
+    "name": "Mohanlalganj",
+    "district_lgd_code": 926
+  },
+  {
+    "lgd_code": 84,
+    "name": "Nigohan",
+    "district_lgd_code": 926
+  }
+]
