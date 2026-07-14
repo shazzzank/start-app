@@ -22,8 +22,9 @@ export const Route = createRootRoute({
   ),
   errorComponent: ({ error }: { error: Error }) => {
     return (
-      <div className='flex justify-center items-center h-screen w-screen'>
+      <div className='flex flex-col justify-center items-center h-screen w-screen'>
         <h1 className='text-4xl font-medium'>Something went wrong. Please try again later</h1>
+        <p>Error Code: 2000 <span className='hidden'>{JSON.stringify(error)}</span></p>
       </div>
     );
   },

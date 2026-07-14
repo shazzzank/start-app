@@ -31,28 +31,29 @@ const middleware = createMiddleware({ type: 'function' })
     if (requestCount === 1) await redis.expire(rateLimitKey, 6);
 
     if (isNotLocked && requestCount < 5) {
-      logger.info({
-        message: 'Request received',
-        requestId,
-        lockKey,
-        input: data,
-      });
       const output = await next();
       logger.info({
-        message: 'Response sent',
         requestId,
-        lockKey,
+        message: 'Success',
+        error: null,
+        data: {
+          request: data,
+          response: (output as any).result,
+        },
         executionTime: Math.round(performance.now() - requestTime),
-        output: (output as any).result,
       });
       return output;
     }
     else {
       logger.warn({
-        message: 'Lock conflict or rate limit reached, request rejected',
         requestId,
-        lockKey,
-        rateLimitKey
+        message: 'Failure',
+        error: 'Lock or rate limit conflict',
+        data: {
+          lockKey,
+          rateLimitKey,
+        },
+        executionTime: Math.round(performance.now() - requestTime),
       });
       return {
         status_code: STATUS_CODES.CONFLICT,
