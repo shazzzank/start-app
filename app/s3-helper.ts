@@ -1,9 +1,4 @@
-import {
-  PutObjectCommand,
-  DeleteObjectCommand,
-  ListObjectsV2Command,
-  GetObjectCommand
-} from "@aws-sdk/client-s3";
+import { PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command, GetObjectCommand } from "@aws-sdk/client-s3";
 import { s3 } from "@/app/config";
 import { AWS_BUCKET } from "@/app/constants";
 

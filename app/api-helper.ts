@@ -70,8 +70,8 @@ export const createEntityFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     try {
       const entity = data.entity;
-      const { schema, validator, idValidator } = getEntityConfig(entity);
-      const payload = validator.extend(idValidator.shape).parse(data.payload);
+      const { schema, createValidator } = getEntityConfig(entity);
+      const payload = createValidator.parse(data.payload);
       const id = crypto.randomUUID();
 
       const finalData = { ...payload, id };
@@ -125,8 +125,8 @@ export const updateEntityFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     try {
       const entity = data.entity;
-      const { schema, validator, idValidator } = getEntityConfig(entity);
-      const payload = validator.extend(idValidator.shape).parse(data.payload);
+      const { schema, updateValidator } = getEntityConfig(entity);
+      const payload = updateValidator.parse(data.payload);
 
       await putObject(`${s3Path}/${entity}/${payload.id}.json`, payload);
       await db.update(schema).set(payload).where(eq(schema.id, payload.id));

@@ -4,16 +4,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SITENAME } from '@/app/constants';
 import appCss from '@/app/styles.css?url';
 
-const queryClient = new QueryClient();
-
 export const Route = createRootRoute({
   head: () => ({
+    links: [{ rel: 'stylesheet', href: appCss }],
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       { title: SITENAME },
     ],
-    links: [{ rel: 'stylesheet', href: appCss }],
   }),
   notFoundComponent: () => (
     <div className='flex justify-center items-center h-screen w-screen'>
@@ -34,7 +32,7 @@ export const Route = createRootRoute({
         <HeadContent />
       </head>
       <body>
-        <QueryClientProvider client={queryClient}>
+        <QueryClientProvider client={new QueryClient()}>
           <Outlet />
         </QueryClientProvider>
         <Scripts />

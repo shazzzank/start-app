@@ -5,7 +5,6 @@ import Redis from 'ioredis';
 import { S3Client } from "@aws-sdk/client-s3";
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { AWS_REGION, AWS_ENDPOINT, AWS_ACCESS_KEY, AWS_SECRET_KEY, DATABASE_URL, REDIS_URL } from "@/app/constants";
-import { dbUserSchema, zodUserIdSchema, zodUserSchema } from "@/app/db-schema";
 
 export const redis = new Redis(REDIS_URL);
 export const db = drizzle(DATABASE_URL);
@@ -40,13 +39,6 @@ export const logger = winston.createLogger({
     }),
   ],
 });
-const entityConfig = {
-  user: {
-    schema: dbUserSchema,
-    validator: zodUserSchema,
-    idValidator: zodUserIdSchema,
-  },
-};
 export const getEntityConfig = (entity: string) => entityConfig[entity as keyof typeof entityConfig];
 // Frontend 
 
