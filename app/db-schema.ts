@@ -1,8 +1,7 @@
-import z from 'zod';
 import { sql } from 'drizzle-orm';
 import { pgTable, varchar, integer, boolean, timestamp } from 'drizzle-orm/pg-core';
 import { TABLE_PREFIX } from '@/app/constants';
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { createInsertSchema } from "drizzle-zod";
 
 export const dbUserSchema = pgTable(`${TABLE_PREFIX}users`, {
   id: varchar('id', { length: 64 }).primaryKey(),
@@ -23,7 +22,6 @@ export const entityConfig = {
     schema: dbUserSchema,
     createValidator: createInsertSchema(dbUserSchema),
     updateValidator: createInsertSchema(dbUserSchema).partial().required({ id: true }),
-    selectValidator: createSelectSchema(dbUserSchema),
-    idValidator: z.object({ id: z.string() }),
+    selectValidator: createInsertSchema(dbUserSchema).omit({ id: true, created_at: true }),
   },
 };
