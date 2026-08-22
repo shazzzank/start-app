@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import Toast from '@/app/components/toast';
 import Form from '@/app/components/form';
 import userSchema from '@/app/schema/user';
 import { UserSelectType } from '@/app/types';
 import { createEntityFn } from '@/app/api-helper';
 import { toTitleCase } from '@/app/helper';
+import { SITENAME } from '@/app/constants';
 
 export const Route = createFileRoute('/create/$entity')({
   component: () => {
@@ -26,15 +27,28 @@ export const Route = createFileRoute('/create/$entity')({
     }
 
     return (
-      <div className='flex flex-col gap-10 page-container center'>
-        <h1 className='page-title'>
-          Create {toTitleCase(entity)} Form
-        </h1>
-        <p>
-          {`Add the details below to create a new ${entity}. You can update this information later if needed.`}
-        </p>
-        <Form schema={userSchema(data)} onSubmit={() => onSubmit} />
-        <Toast toast={toast} setToast={setToast} />
+      <div className='create-shell'>
+        <nav className='site-nav'>
+          <Link to='/' className='site-brand'>
+            {SITENAME}<span>.</span>
+          </Link>
+          <Link to='/' className='nav-link'>
+            Home
+          </Link>
+        </nav>
+        <div className='create-panel'>
+          <p className='create-kicker'>새 항목 · New record</p>
+          <h1 className='page-title'>
+            Create {toTitleCase(entity)}
+          </h1>
+          <p className='create-lede'>
+            {`Add the details below to create a new ${entity}. You can update this information later if needed.`}
+          </p>
+          <div className='create-form'>
+            <Form schema={userSchema(data)} onSubmit={() => onSubmit} />
+          </div>
+          <Toast toast={toast} setToast={setToast} />
+        </div>
       </div>
     );
   }

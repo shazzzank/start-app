@@ -34,8 +34,9 @@ export const STATUS_MESSAGES = {
 };
 
 // Frontend
-export const PRIMARY_COLOR = '#B8A898';
-export const SECONDARY_COLOR = '#E7DED6';
-export const ACCENT_COLOR = '#7C6A5A';
+export const PRIMARY_COLOR = '#00141a';
+export const SECONDARY_COLOR = '#9eacad';
+export const ACCENT_COLOR = '#2aa198';
+
 export const SITENAME = 'Start';
 export const s3Path = 'start/uploads'

@@ -23,15 +23,15 @@ export default function Toast({ toast, setToast }: TostType) {
   }, [toast.message, setToast]);
 
   const color = toast.success
-    ? 'bg-green-50 text-green-800 border-green-800'
+    ? 'bg-highlight text-green border-green'
     : toast.error
-      ? 'bg-red-100 text-red-800 border-red-800'
-      : 'bg-gray-100 text-black border-gray-300';
+      ? 'bg-highlight text-red border-red'
+      : 'bg-surface text-fg border-highlight';
 
   return toast.message ? (
     <div
       ref={toastRef}
-      className={`mt-2 w-full rounded-md border p-3 px-5 text-base shadow-md ${color}`}
+      className={`mt-6 w-full rounded-sm border p-3 px-5 text-base ${color}`}
     >
       {toast.message}
     </div>
