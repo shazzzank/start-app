@@ -5,8 +5,18 @@ import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { DATABASE_URL, REDIS_URL } from '@/app/constants';
 
-export const redis = new Redis(REDIS_URL, { maxRetriesPerRequest: 2, enableReadyCheck: true });
-const pool = new Pool({ connectionString: DATABASE_URL, max: 20, idleTimeoutMillis: 30_000 });
+const isLocalDb = /localhost|127\.0\.0\.1/.test(DATABASE_URL);
+export const redis = new Redis(REDIS_URL, {
+  maxRetriesPerRequest: 2,
+  enableReadyCheck: false,
+  ...(REDIS_URL.startsWith('rediss://') ? { tls: {} } : {}),
+});
+const pool = new Pool({
+  connectionString: DATABASE_URL,
+  max: 20,
+  idleTimeoutMillis: 30_000,
+  ...(isLocalDb ? {} : { ssl: { rejectUnauthorized: false } }),
+});
 export const db = drizzle(pool);
 export const logger = winston.createLogger({
   level: 'info',

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { v2 as cloudinary } from 'cloudinary';
-import { eq, like, or } from 'drizzle-orm';
+import { eq, like } from 'drizzle-orm';
 import { db, redis } from '@/app/config';
 import { cloudinaryCloudName, environment } from '@/app/constants';
 import { isCloudinaryImageUrl } from '@/app/cloudinary-url';
@@ -95,30 +95,43 @@ export async function getAssetUrls() {
   };
 }
 
+async function uploadCatalogImage(publicId: string, localPath: string) {
+  const filePath = path.join(process.cwd(), 'public', localPath);
+  if (fs.existsSync(filePath)) return uploadLocalAsset(filePath, publicId);
+  ensureConfig();
+  const seed = publicId.replace(/\//g, '-');
+  const result = await cloudinary.uploader.upload(
+    `https://picsum.photos/seed/${encodeURIComponent(seed)}/900/900`,
+    { public_id: publicId, overwrite: true, resource_type: 'image' },
+  );
+  return result.secure_url;
+}
+
 async function migrateStaticAssets() {
-  if (!configured() || await redis.get(migratedKey)) return;
+  if (!configured()) return;
+
+  const rows = await db.select({ slug: products.slug, image: products.image }).from(products)
+    .where(like(products.image, '/products/%'));
+  if (!rows.length && await redis.get(migratedKey)) return;
 
   const { catalog } = await import('@/app/seed');
   const imageMap = new Map<string, string>();
-  const uniquePaths = [...new Set(catalog.map((item) => item.image))];
-  for (const localPath of uniquePaths) {
-    if (!localPath.startsWith('/')) continue;
-    const filePath = path.join(process.cwd(), 'public', localPath);
-    if (!fs.existsSync(filePath)) continue;
+  const uniquePaths = [...new Set([
+    ...catalog.map((item) => item.image),
+    ...rows.map((row) => row.image),
+  ])];
+  await Promise.all(uniquePaths.map(async (localPath) => {
+    if (!localPath.startsWith('/')) return;
     const publicId = `${assetPrefix}${localPath.replace(/\.[^.]+$/, '')}`;
-    imageMap.set(localPath, await uploadLocalAsset(filePath, publicId));
-  }
+    imageMap.set(localPath, await uploadCatalogImage(publicId, localPath));
+  }));
 
-  for (const item of catalog) {
-    const url = imageMap.get(item.image);
-    url && (item.image = url);
-  }
-
-  const fallback = cloudinaryDeliveryUrl(`${assetPrefix}/fallback`);
+  const fallbackPath = path.join(process.cwd(), 'public', 'fallback.svg');
+  const fallback = fs.existsSync(fallbackPath)
+    ? await uploadLocalAsset(fallbackPath, `${assetPrefix}/fallback`)
+    : await uploadCatalogImage(`${assetPrefix}/fallback`, 'fallback.svg');
   await redis.set(`${environment}:assets:fallback`, fallback);
 
-  const rows = await db.select({ slug: products.slug, image: products.image }).from(products)
-    .where(or(like(products.image, '/products/%'), like(products.image, 'http%')));
   for (const row of rows) {
     const url = imageMap.get(row.image);
     url && await db.update(products).set({ image: url }).where(eq(products.slug, row.slug));

@@ -6,7 +6,7 @@ import viteReact from '@vitejs/plugin-react';
 import { nitro } from 'nitro/vite';
 import { PORT } from './app/constants';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   server: {
     port: PORT,
   },
@@ -14,10 +14,20 @@ export default defineConfig({
     alias: { '@': path.resolve(__dirname, './') },
     tsconfigPaths: true,
   },
+  oxc: {
+    jsx: {
+      runtime: 'automatic',
+      development: mode !== 'production',
+    },
+  },
+  esbuild: {
+    jsx: 'automatic',
+    jsxDev: mode !== 'production',
+  },
   plugins: [
     tailwindcss(),
     tanstackStart(),
-    nitro(),
-    viteReact(),
+    nitro({ vercel: { entryFormat: 'node' } }),
+    viteReact({ jsxRuntime: 'automatic' }),
   ],
-})
+}));

@@ -1,6 +1,10 @@
 export const environment = process.env.APP_ENV ?? process.env.NODE_ENV ?? 'local';
 export const DATABASE_URL = process.env.DATABASE_URL ?? 'postgresql://moses@127.0.0.1/start';
-export const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
+const redisUrlRaw = process.env.REDIS_URL ?? 'redis://localhost:6379';
+const redisUrlMatched = redisUrlRaw.match(/(rediss?:\/\/\S+)/)?.[1] ?? redisUrlRaw;
+export const REDIS_URL = redisUrlMatched.includes('upstash.io')
+  ? redisUrlMatched.replace(/^redis:\/\//, 'rediss://')
+  : redisUrlMatched;
 export const PORT = Number(process.env.PORT ?? 3000);
 export const TABLE_PREFIX = 'start_api_';
 export const productsPageSize = 24;
