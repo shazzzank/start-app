@@ -3,10 +3,10 @@ import { useEffect, useRef, useState } from 'react';
 import { SITENAME } from '@/app/constants';
 import { useShop } from '@/app/components/shop-provider';
 
-const items = [
-  { to: '/products', label: 'Shop' },
-  { to: '/orders', label: 'Orders', countKey: 'cart' as const },
-  { to: '/wishlist', label: 'Wishlist', countKey: 'wishlist' as const },
+const shopLink = { to: '/products', label: 'Shop' } as const;
+const customerLinks = [
+  { to: '/orders', label: 'Orders' },
+  { to: '/wishlist', label: 'Wishlist' },
 ] as const;
 
 type Crumb = { to?: string; label: string };
@@ -52,7 +52,7 @@ export default function Nav() {
   const navigate = useNavigate();
   const menuRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const { user, wishlist, cart, unread, loading, logout } = useShop();
+  const { user, wishlist, orders, unread, loading, logout } = useShop();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const params = useParams({ strict: false });
   const crumbs = buildBreadcrumbs(pathname, params);
@@ -67,6 +67,7 @@ export default function Nav() {
   }, [menuOpen]);
 
   const linkLabel = (label: string, count?: number) => count && count > 0 ? `${label}, ${count} items` : label;
+  const navLinks = user?.role === 'admin' ? [shopLink] : user ? [shopLink, ...customerLinks] : [shopLink];
 
   return (
     <nav className='nav' aria-label='Main'>
@@ -91,8 +92,8 @@ export default function Nav() {
         </nav>
       )}
       <div className='nav-links'>
-        {(user?.role === 'admin' ? items.filter((item) => item.to === '/products') : items).map((item) => {
-          const count = item.countKey === 'cart' ? cart.length : item.countKey === 'wishlist' ? wishlist.length : 0;
+        {navLinks.map((item) => {
+          const count = item.to === '/orders' ? orders.length : item.to === '/wishlist' ? wishlist.length : 0;
           return (
             <Link key={item.to} to={item.to} className='link' aria-label={linkLabel(item.label, count)}>
               {item.label}

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { v2 as cloudinary } from 'cloudinary';
-import { eq, like } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { db, logger, redis } from '@/app/config';
 import { environment } from '@/app/constants';
 import { isCloudinaryImageUrl } from '@/app/cloudinary-url';
@@ -9,13 +9,14 @@ import { products } from '@/app/db-schema';
 
 const assetPrefix = 'start';
 const productUploadPrefix = `${assetPrefix}/products/catalog`;
-const migratedKey = `${environment}:cloudinary:migrated`;
+const pexelsMigratedKey = `${environment}:cloudinary:pexels:v1`;
 const categoryDefaults: Record<string, string> = {
   Stationery: `${assetPrefix}/products/stationery/notebook`,
   Home: `${assetPrefix}/products/home/mug`,
   Bags: `${assetPrefix}/products/bags/tote`,
   Wear: `${assetPrefix}/products/wear/tee`,
 };
+const genericKeywords = new Set(['set', 'kit', 'pack', 'sample', 'roll', 'block', 'cover', 'holder', 'stand']);
 
 function cloudName() {
   return process.env.CLOUDINARY_CLOUD_NAME ?? '';
@@ -100,56 +101,79 @@ export async function getAssetUrls() {
   };
 }
 
-async function uploadCatalogImage(publicId: string, localPath: string) {
-  const filePath = path.join(process.cwd(), 'public', localPath);
-  if (fs.existsSync(filePath)) return uploadLocalAsset(filePath, publicId);
-  ensureConfig();
-  const seed = publicId.replace(/\//g, '-');
-  const result = await cloudinary.uploader.upload(
-    `https://picsum.photos/seed/${encodeURIComponent(seed)}/900/900`,
-    { public_id: publicId, overwrite: true, resource_type: 'image' },
+function productImageKeyword(slug: string, name: string, image: string) {
+  const pathMatch = image.match(/\/([^/]+)\.[^.]+$/);
+  if (pathMatch?.[1]) return pathMatch[1].replace(/-/g, ' ');
+  const parts = slug.split('-').filter((part) => !genericKeywords.has(part));
+  return parts[parts.length - 1] ?? name.split(/\s+/).pop()?.toLowerCase() ?? 'product';
+}
+
+function pexelsPage(slug: string) {
+  let hash = 0;
+  for (let i = 0; i < slug.length; i++) hash = (hash + slug.charCodeAt(i)) % 15;
+  return hash + 1;
+}
+
+async function pexelsPhotoUrl(keyword: string, page: number) {
+  const apiKey = process.env.PEXELS_API_KEY;
+  if (!apiKey) return null;
+  const res = await fetch(
+    `https://api.pexels.com/v1/search?query=${encodeURIComponent(keyword)}&per_page=1&page=${page}&orientation=square`,
+    { headers: { Authorization: apiKey } },
   );
+  if (!res.ok) return null;
+  const data = await res.json() as { photos?: Array<{ src?: { large2x?: string; large?: string } }> };
+  return data.photos?.[0]?.src?.large2x ?? data.photos?.[0]?.src?.large ?? null;
+}
+
+async function uploadRemoteImage(remoteUrl: string, publicId: string) {
+  ensureConfig();
+  const result = await cloudinary.uploader.upload(remoteUrl, {
+    public_id: publicId,
+    overwrite: true,
+    resource_type: 'image',
+  });
   return result.secure_url;
 }
 
-async function migrateStaticAssets() {
-  if (!configured()) return;
+async function uploadCatalogImage(publicId: string, localPath: string, keyword: string, slug: string) {
+  const filePath = path.join(process.cwd(), 'public', localPath);
+  if (fs.existsSync(filePath)) return uploadLocalAsset(filePath, publicId);
+  const remote = await pexelsPhotoUrl(keyword, pexelsPage(slug));
+  return remote ? uploadRemoteImage(remote, publicId) : '';
+}
 
-  const rows = await db.select({ slug: products.slug, image: products.image }).from(products)
-    .where(like(products.image, '/products/%'));
-  if (!rows.length && await redis.get(migratedKey)) return;
+async function migrateProductImages() {
+  if (!configured() || !process.env.PEXELS_API_KEY || await redis.get(pexelsMigratedKey)) return;
 
-  const { catalog } = await import('@/app/seed');
-  const imageMap = new Map<string, string>();
-  const uniquePaths = [...new Set([
-    ...catalog.map((item) => item.image),
-    ...rows.map((row) => row.image),
-  ])];
-  await Promise.all(uniquePaths.map(async (localPath) => {
-    if (!localPath.startsWith('/')) return;
-    const publicId = `${assetPrefix}${localPath.replace(/\.[^.]+$/, '')}`;
-    imageMap.set(localPath, await uploadCatalogImage(publicId, localPath));
-  }));
+  const rows = await db.select({
+    slug: products.slug,
+    name: products.name,
+    image: products.image,
+  }).from(products);
+
+  for (const row of rows) {
+    const keyword = productImageKeyword(row.slug, row.name, row.image);
+    const publicId = productUploadPublicId(row.slug);
+    const localPath = row.image.startsWith('/products/') ? row.image : `/products/catalog/${row.slug}.jpg`;
+    const url = await uploadCatalogImage(publicId, localPath, keyword, row.slug);
+    url && await db.update(products).set({ image: url }).where(eq(products.slug, row.slug));
+  }
 
   const fallbackPath = path.join(process.cwd(), 'public', 'fallback.svg');
   const fallback = fs.existsSync(fallbackPath)
     ? await uploadLocalAsset(fallbackPath, `${assetPrefix}/fallback`)
-    : await uploadCatalogImage(`${assetPrefix}/fallback`, 'fallback.svg');
-  await redis.set(`${environment}:assets:fallback`, fallback);
-
-  for (const row of rows) {
-    const url = imageMap.get(row.image);
-    url && await db.update(products).set({ image: url }).where(eq(products.slug, row.slug));
-  }
+    : await uploadCatalogImage(`${assetPrefix}/fallback`, 'fallback.svg', 'product', 'fallback');
+  fallback && await redis.set(`${environment}:assets:fallback`, fallback);
 
   await redis.incr(`${environment}:products:ver`);
-  await redis.set(migratedKey, '1');
+  await redis.set(pexelsMigratedKey, '1');
 }
 
 export async function ensureCloudinaryAssets() {
   if (!configured()) return;
   try {
-    await migrateStaticAssets();
+    await migrateProductImages();
   } catch (err) {
     logger.error('Cloudinary migration failed', { err });
   }
