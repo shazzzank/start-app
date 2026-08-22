@@ -1,4 +1,5 @@
-import type { ShopCurrency } from '@/app/types';
+import { getRequestHeader, getRequestIP } from '@tanstack/react-start/server';
+import type { ShopCurrency, ShopLocale } from '@/app/types';
 
 const countryCurrency: Record<string, ShopCurrency> = {
   IN: 'INR', US: 'USD', GB: 'GBP', CA: 'CAD', AU: 'AUD', NZ: 'AUD',
@@ -36,9 +37,51 @@ const currencyLocale: Record<ShopCurrency, string> = {
 };
 
 const zeroDecimal = new Set<ShopCurrency>(['INR', 'JPY', 'KRW']);
+const defaultCountry = 'IN';
+const defaultCurrency: ShopCurrency = 'INR';
+
+function isPrivateIp(ip: string) {
+  if (!ip || ip === '127.0.0.1' || ip === '::1') return true;
+  if (ip.startsWith('10.') || ip.startsWith('192.168.')) return true;
+  if (ip.startsWith('fc00:') || ip.startsWith('fd')) return true;
+  const private172 = ip.match(/^172\.(\d+)\./);
+  if (private172 && Number(private172[1]) >= 16 && Number(private172[1]) <= 31) return true;
+  return false;
+}
+
+function isCountryCode(value: string | null | undefined) {
+  return !!value && value.length === 2 && value !== 'XX' && /^[A-Z]{2}$/i.test(value);
+}
+
+function edgeCountryCode() {
+  const raw = getRequestHeader('cf-ipcountry')
+    ?? getRequestHeader('x-vercel-ip-country')
+    ?? getRequestHeader('x-country-code')
+    ?? getRequestHeader('fly-client-country');
+  return isCountryCode(raw) ? raw!.toUpperCase() : null;
+}
+
+async function countryFromIp(ip: string) {
+  if (isPrivateIp(ip)) return defaultCountry;
+  try {
+    const res = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}?fields=country_code,success`, {
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!res.ok) return defaultCountry;
+    const data = await res.json() as { success?: boolean; country_code?: string };
+    if (data.success && isCountryCode(data.country_code)) return data.country_code!.toUpperCase();
+  } catch {}
+  return defaultCountry;
+}
 
 export function currencyForCountry(country: string): ShopCurrency {
-  return countryCurrency[country.toUpperCase()] ?? 'USD';
+  return countryCurrency[country.toUpperCase()] ?? defaultCurrency;
+}
+
+export async function resolveShopLocale(): Promise<ShopLocale> {
+  const edgeCountry = edgeCountryCode();
+  const country = edgeCountry ?? await countryFromIp(getRequestIP({ xForwardedFor: true }) ?? '');
+  return { country, currency: currencyForCountry(country) };
 }
 
 export function formatPrice(amountInInr: number, currency: ShopCurrency) {

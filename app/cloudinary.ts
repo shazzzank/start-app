@@ -114,21 +114,7 @@ async function migrateStaticAssets() {
     url && (item.image = url);
   }
 
-  const fontPrimaryPath = path.join(process.cwd(), 'public/fonts/serif.ttf');
-  const fontSecondaryPath = path.join(process.cwd(), 'public/fonts/sans-serif.ttf');
-  const fallbackPath = path.join(process.cwd(), 'public/fallback.svg');
-  const fontPrimary = fs.existsSync(fontPrimaryPath)
-    ? await uploadLocalAsset(fontPrimaryPath, `${assetPrefix}/fonts/serif`, 'raw')
-    : '';
-  const fontSecondary = fs.existsSync(fontSecondaryPath)
-    ? await uploadLocalAsset(fontSecondaryPath, `${assetPrefix}/fonts/sans-serif`, 'raw')
-    : '';
-  const fallback = fs.existsSync(fallbackPath)
-    ? await uploadLocalAsset(fallbackPath, `${assetPrefix}/fallback`)
-    : cloudinaryDeliveryUrl(`${assetPrefix}/fallback`);
-
-  fontPrimary && await redis.set(`${environment}:assets:font-primary`, fontPrimary);
-  fontSecondary && await redis.set(`${environment}:assets:font-secondary`, fontSecondary);
+  const fallback = cloudinaryDeliveryUrl(`${assetPrefix}/fallback`);
   await redis.set(`${environment}:assets:fallback`, fallback);
 
   const rows = await db.select({ slug: products.slug, image: products.image }).from(products)

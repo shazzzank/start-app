@@ -4,6 +4,9 @@ import Button from '@/app/components/button';
 import Image from '@/app/components/image';
 import Page from '@/app/components/page';
 import { useShop } from '@/app/components/shop-provider';
+import { productImageMaxBytes, productImageMimeTypes } from '@/app/constants';
+import { fileToBase64 } from '@/app/helper';
+import type { ProductImageMime } from '@/app/types';
 import { getProductFn, removeProductImageFn, updateProductFn, uploadProductImageFn } from '@/app/shop-api';
 
 export const Route = createFileRoute('/admin/products/$slug/edit')({
@@ -14,15 +17,6 @@ export const Route = createFileRoute('/admin/products/$slug/edit')({
   },
   component: EditProductPage,
 });
-
-function fileToBase64(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error('Could not read file'));
-    reader.readAsDataURL(file);
-  });
-}
 
 function EditProductPage() {
   const product = Route.useLoaderData();
@@ -46,11 +40,11 @@ function EditProductPage() {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
-    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
+    if (!productImageMimeTypes.includes(file.type as ProductImageMime)) {
       setError('Use JPEG, PNG, WebP, or GIF.');
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > productImageMaxBytes) {
       setError('Image must be 5 MB or less.');
       return;
     }
@@ -61,7 +55,7 @@ function EditProductPage() {
         data: {
           slug: product.slug,
           file: await fileToBase64(file),
-          mime: file.type as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif',
+          mime: file.type as ProductImageMime,
           currentImage: image,
         },
       });

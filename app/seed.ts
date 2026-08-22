@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { db } from '@/app/config';
 import { products, sessions, shopUsers } from '@/app/db-schema';
 import { hashPassword } from '@/app/auth';
@@ -242,15 +242,6 @@ export async function ensureSeed() {
 
   for (const slug of legacySlugs) {
     await db.delete(products).where(eq(products.slug, slug));
-  }
-
-  try {
-    await db.execute(sql`update start_api_products set partner_id = null where partner_id is not null`);
-  } catch { /* partner_id column removed */ }
-  const partners = await db.select({ id: shopUsers.id }).from(shopUsers).where(sql`${shopUsers.role} = 'partner'`);
-  for (const row of partners) {
-    await db.delete(sessions).where(eq(sessions.user_id, row.id));
-    await db.delete(shopUsers).where(eq(shopUsers.id, row.id));
   }
 
   {

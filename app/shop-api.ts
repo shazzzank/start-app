@@ -1,9 +1,12 @@
 import { z } from 'zod';
 import { createServerFn } from '@tanstack/react-start';
-import { getRequestHeader, getRequestIP } from '@tanstack/react-start/server';
+import { getRequestIP } from '@tanstack/react-start/server';
 import { and, asc, desc, eq, gte, ilike, inArray, lte, ne, or, sql } from 'drizzle-orm';
 import { db, redis } from '@/app/config';
-import { categoriesCacheTtl, environment, productsCacheTtl, productsPageSize } from '@/app/constants';
+import {
+  categoriesCacheTtl, environment, productDetailCacheTtl, productImageMaxBytes,
+  productImageMimeTypes, productsCacheTtl, productsPageSize,
+} from '@/app/constants';
 import {
   cartItems, notifications, orderItems, orders, products, sessions, shopUsers, wishlistItems,
 } from '@/app/db-schema';
@@ -11,54 +14,13 @@ import {
   adminEmailFromEnv, clearSessionCookie, escapeLike, getSessionUser, hashPassword, isSafeSlug,
   isStrongPassword, rateLimit, readSessionId, requireUser, sessionExpiry, setSessionCookie, verifyPassword,
 } from '@/app/auth';
+import { parseBase64Payload } from '@/app/helper';
 import { ensureSeed, mapProduct } from '@/app/seed';
 import {
   categoryDefaultImage, deleteCloudinaryImage, ensureCloudinaryAssets,
   isCloudinaryImageUrl, isDeletableProductUpload, productUploadPublicId, uploadImageBuffer,
 } from '@/app/cloudinary';
-import { currencyForCountry, formatPrice } from '@/app/locale';
-import type { ShopLocale } from '@/app/types';
-
-function isPrivateIp(ip: string) {
-  return !ip
-    || ip === '127.0.0.1'
-    || ip === '::1'
-    || ip.startsWith('10.')
-    || ip.startsWith('192.168.')
-    || ip.startsWith('172.16.')
-    || ip.startsWith('fc00:');
-}
-
-function guessCountryFromLanguage() {
-  const header = getRequestHeader('accept-language')?.toLowerCase() ?? '';
-  if (header.includes('ko')) return 'KR';
-  if (header.includes('ja')) return 'JP';
-  if (header.includes('en-gb')) return 'GB';
-  if (header.includes('en-in') || header.includes('hi')) return 'IN';
-  if (header.includes('en-us')) return 'US';
-  if (header.includes('de') || header.includes('fr') || header.includes('es')) return 'DE';
-  return null;
-}
-
-async function countryFromIp(ip: string) {
-  if (isPrivateIp(ip)) return guessCountryFromLanguage() ?? 'IN';
-  try {
-    const res = await fetch(`http://ip-api.com/json/${ip}?fields=countryCode`, { signal: AbortSignal.timeout(2500) });
-    if (!res.ok) return guessCountryFromLanguage() ?? 'IN';
-    const data = await res.json() as { countryCode?: string };
-    return data.countryCode ?? guessCountryFromLanguage() ?? 'IN';
-  } catch {
-    return guessCountryFromLanguage() ?? 'IN';
-  }
-}
-
-async function resolveShopLocale(): Promise<ShopLocale> {
-  const edgeCountry = getRequestHeader('cf-ipcountry') ?? getRequestHeader('x-vercel-ip-country');
-  const country = edgeCountry && edgeCountry !== 'XX'
-    ? edgeCountry
-    : await countryFromIp(getRequestIP({ xForwardedFor: true }) ?? '');
-  return { country, currency: currencyForCountry(country) };
-}
+import { formatPrice, resolveShopLocale } from '@/app/locale';
 
 async function notify(userId: string, title: string, body: string) {
   await db.insert(notifications).values({
@@ -88,12 +50,6 @@ export const getAssetUrlsFn = createServerFn({ method: 'GET' }).handler(async ()
 });
 
 export const getLocaleFn = createServerFn({ method: 'GET' }).handler(async () => resolveShopLocale());
-
-const productDetailCacheTtl = 120;
-
-function isSafeImageUrl(value: string) {
-  return isCloudinaryImageUrl(value);
-}
 
 export const loginFn = createServerFn({ method: 'POST' })
   .validator(z.object({ email: z.string().email().max(255), password: z.string().min(1).max(128) }))
@@ -571,7 +527,7 @@ export const updateProductFn = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const user = await requireUser(['admin']);
     if (!user) return { ok: false as const };
-    if (!isSafeSlug(data.slug) || !isSafeImageUrl(data.image)) return { ok: false as const };
+    if (!isSafeSlug(data.slug) || !isCloudinaryImageUrl(data.image)) return { ok: false as const };
     const [product] = await db.select().from(products).where(eq(products.slug, data.slug)).limit(1);
     if (!product) return { ok: false as const };
     await db.update(products).set({
@@ -586,13 +542,13 @@ export const updateProductFn = createServerFn({ method: 'POST' })
     return { ok: true as const };
   });
 
-const imageMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const;
+const imageMimeTypes = z.enum(productImageMimeTypes);
 
 export const uploadProductImageFn = createServerFn({ method: 'POST' })
   .validator(z.object({
     slug: z.string().max(128),
     file: z.string().min(1),
-    mime: z.enum(imageMimeTypes),
+    mime: imageMimeTypes,
     currentImage: z.string().optional(),
   }))
   .handler(async ({ data }) => {
@@ -600,9 +556,8 @@ export const uploadProductImageFn = createServerFn({ method: 'POST' })
     if (!user || !isSafeSlug(data.slug)) return { ok: false as const, message: 'Admin access required' };
     const [product] = await db.select().from(products).where(eq(products.slug, data.slug)).limit(1);
     if (!product) return { ok: false as const, message: 'Product not found' };
-    const raw = data.file.includes(',') ? data.file.split(',')[1] : data.file;
-    const buffer = Buffer.from(raw, 'base64');
-    if (buffer.length > 5 * 1024 * 1024) return { ok: false as const, message: 'Image must be 5 MB or less' };
+    const buffer = Buffer.from(parseBase64Payload(data.file), 'base64');
+    if (buffer.length > productImageMaxBytes) return { ok: false as const, message: 'Image must be 5 MB or less' };
     try {
       const publicId = productUploadPublicId(data.slug);
       const url = await uploadImageBuffer(buffer, publicId);

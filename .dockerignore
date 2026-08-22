@@ -1,0 +1,9 @@
+node_modules
+dist
+.git
+.tanstack
+logs
+.env
+.env.*
+!.env.example
+src/routeTree.gen.ts

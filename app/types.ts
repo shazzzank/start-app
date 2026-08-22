@@ -85,15 +85,4 @@ export type Notification = {
   createdAt: string;
 };
 
-export type TostType = {
-  toast: any;
-  setToast: any;
-};
-
-export type SchemaType = {
-  name: string;
-  value: string | number | boolean | null | undefined;
-  element: 'select' | 'input' | 'button' | 'radio';
-  type: 'text' | 'email' | 'tel' | 'date' | 'checkbox' | null;
-  options?: { label: string; value: string | number | boolean }[];
-};
+export type ProductImageMime = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';

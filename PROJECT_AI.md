@@ -26,7 +26,7 @@ Update this file whenever behaviour, data, or scope changes in code.
 **Non-goals (current phase)**
 
 - Payment gateway integration (checkout is instant / mock).
-- Redis or S3 in the shop UI (wired in config, unused by storefront).
+- Redis for caching and rate limits; images on Cloudinary (no S3/Minio).
 - Multi-vendor checkout splits or shipping carriers.
 
 ---
@@ -151,7 +151,7 @@ Admin → /login → /admin → stat panels (catalogue, orders, users, alerts) �
 | Data | Drizzle ORM + PostgreSQL, table prefix `start_api_` |
 | Client data | TanStack Query via `ShopProvider` |
 | Auth cookie | `start_session` → `start_api_sessions` |
-| Infra (unused by shop) | Redis, Minio/S3 in `app/config.ts` |
+| Infra | Postgres, Redis (`app/config.ts`), Cloudinary |
 | Media | Cloudinary (`app/cloudinary.ts`) — images, fonts, fallback; admin upload/remove |
 
 ---
@@ -246,7 +246,7 @@ Database URL: `app/constants.ts` → `postgresql://moses@127.0.0.1/start`
 
 - Removed: `app/schema/user.ts` (replaced by `shop_users`)
 - No payment processor
-- Redis/S3 not used in storefront flows
+- S3/Minio removed; Redis used for product cache and rate limits
 
 ---
 

@@ -32,7 +32,13 @@ const ShopContext = createContext<ShopContextValue | null>(null);
 export function ShopProvider({ children }: { children: ReactNode }) {
   const client = useQueryClient();
   const session = useQuery({ queryKey: ['session'], queryFn: () => getSessionFn() });
-  const localeQuery = useQuery({ queryKey: ['locale'], queryFn: () => getLocaleFn() });
+  const localeQuery = useQuery({
+    queryKey: ['locale'],
+    queryFn: () => getLocaleFn(),
+    staleTime: Infinity,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
   const user = session.data?.user ?? null;
   const locale = localeQuery.data ?? { country: 'IN', currency: 'INR' as ShopCurrency };
   const shopperEnabled = !!user && user.role !== 'admin';

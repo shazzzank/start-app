@@ -1,6 +1,5 @@
 import { sql } from 'drizzle-orm';
 import { pgTable, varchar, integer, text, boolean, timestamp, unique, index } from 'drizzle-orm/pg-core';
-import { createInsertSchema } from 'drizzle-zod';
 import { TABLE_PREFIX } from '@/app/constants';
 
 const p = TABLE_PREFIX;
@@ -86,13 +85,3 @@ export const notifications = pgTable(`${p}notifications`, {
   index('notifications_read_idx').on(t.read),
 ]);
 
-export const dbUserSchema = shopUsers;
-
-export const entityConfig = {
-  user: {
-    schema: shopUsers,
-    createValidator: createInsertSchema(shopUsers).omit({ id: true, created_at: true }),
-    updateValidator: createInsertSchema(shopUsers).partial().required({ id: true }),
-    selectValidator: createInsertSchema(shopUsers).omit({ id: true, created_at: true, password_hash: true }),
-  },
-};
