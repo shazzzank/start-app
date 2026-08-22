@@ -1,5 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { db } from '@/app/config';
+import { resolveProductImageUrl } from '@/app/cloudinary-url';
 import { products, sessions, shopUsers } from '@/app/db-schema';
 import { hashPassword } from '@/app/auth';
 import type { Product, ProductCategory, SeedProduct } from '@/app/types';
@@ -303,6 +304,6 @@ export function mapProduct(row: {
     description: row.description,
     price: row.price,
     stock: row.stock,
-    image: row.image,
+    image: resolveProductImageUrl(row.image),
   };
 }

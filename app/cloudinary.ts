@@ -2,8 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { v2 as cloudinary } from 'cloudinary';
 import { eq, like } from 'drizzle-orm';
-import { db, redis } from '@/app/config';
-import { cloudinaryCloudName, environment } from '@/app/constants';
+import { db, logger, redis } from '@/app/config';
+import { environment } from '@/app/constants';
 import { isCloudinaryImageUrl } from '@/app/cloudinary-url';
 import { products } from '@/app/db-schema';
 
@@ -17,13 +17,17 @@ const categoryDefaults: Record<string, string> = {
   Wear: `${assetPrefix}/products/wear/tee`,
 };
 
+function cloudName() {
+  return process.env.CLOUDINARY_CLOUD_NAME ?? '';
+}
+
 function configured() {
-  return !!(cloudinaryCloudName && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
+  return !!(cloudName() && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
 }
 
 function ensureConfig() {
   cloudinary.config({
-    cloud_name: cloudinaryCloudName,
+    cloud_name: cloudName(),
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
     secure: true,
@@ -31,8 +35,9 @@ function ensureConfig() {
 }
 
 export function cloudinaryDeliveryUrl(publicId: string, resourceType: 'image' | 'raw' = 'image') {
-  if (!cloudinaryCloudName) return '';
-  return `https://res.cloudinary.com/${cloudinaryCloudName}/${resourceType}/upload/f_auto,q_auto/${publicId}`;
+  const name = cloudName();
+  if (!name) return '';
+  return `https://res.cloudinary.com/${name}/${resourceType}/upload/f_auto,q_auto/${publicId}`;
 }
 
 export function publicIdFromUrl(url: string) {
@@ -89,7 +94,7 @@ export async function getAssetUrls() {
   const fontPrimary = await redis.get(`${environment}:assets:font-primary`);
   const fontSecondary = await redis.get(`${environment}:assets:font-secondary`);
   return {
-    fallback: fallback ?? (cloudinaryCloudName ? cloudinaryDeliveryUrl(`${assetPrefix}/fallback`) : '/fallback.svg'),
+    fallback: fallback ?? (cloudName() ? cloudinaryDeliveryUrl(`${assetPrefix}/fallback`) : '/fallback.svg'),
     fontPrimary: fontPrimary ?? '',
     fontSecondary: fontSecondary ?? '',
   };
@@ -142,5 +147,10 @@ async function migrateStaticAssets() {
 }
 
 export async function ensureCloudinaryAssets() {
-  configured() && await migrateStaticAssets();
+  if (!configured()) return;
+  try {
+    await migrateStaticAssets();
+  } catch (err) {
+    logger.error('Cloudinary migration failed', { err });
+  }
 }

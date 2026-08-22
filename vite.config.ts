@@ -1,18 +1,23 @@
 import path from 'path';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import tailwindcss from '@tailwindcss/vite';
 import viteReact from '@vitejs/plugin-react';
 import { nitro } from 'nitro/vite';
-import { PORT } from './app/constants';
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  const cloudinaryCloudName = process.env.CLOUDINARY_CLOUD_NAME ?? env.CLOUDINARY_CLOUD_NAME ?? '';
+  return {
   server: {
-    port: PORT,
+    port: Number(process.env.PORT ?? env.PORT ?? 3000),
   },
   resolve: {
     alias: { '@': path.resolve(__dirname, './') },
     tsconfigPaths: true,
+  },
+  define: {
+    'import.meta.env.VITE_CLOUDINARY_CLOUD_NAME': JSON.stringify(cloudinaryCloudName),
   },
   oxc: {
     jsx: {
@@ -30,4 +35,5 @@ export default defineConfig(({ mode }) => ({
     nitro({ vercel: { entryFormat: 'node' } }),
     viteReact({ jsxRuntime: 'automatic' }),
   ],
-}));
+};
+});

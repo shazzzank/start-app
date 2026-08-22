@@ -15,6 +15,7 @@ import {
   isStrongPassword, rateLimit, readSessionId, requireUser, sessionExpiry, setSessionCookie, verifyPassword,
 } from '@/app/auth';
 import { parseBase64Payload } from '@/app/helper';
+import { resolveProductImageUrl } from '@/app/cloudinary-url';
 import { ensureSeed, mapProduct } from '@/app/seed';
 import {
   categoryDefaultImage, deleteCloudinaryImage, ensureCloudinaryAssets,
@@ -138,6 +139,7 @@ export const getProductsFn = createServerFn({ method: 'GET' })
   }).optional())
   .handler(async ({ data }) => {
     await ensureSeed();
+    await ensureCloudinaryAssets();
     const offset = data?.offset ?? 0;
     const limit = data?.limit ?? productsPageSize;
     const ver = await productsCacheVer();
@@ -174,6 +176,7 @@ export const getProductFn = createServerFn({ method: 'GET' })
   .validator(z.object({ slug: z.string().max(128) }))
   .handler(async ({ data }) => {
     await ensureSeed();
+    await ensureCloudinaryAssets();
     if (!isSafeSlug(data.slug)) return null;
     const ver = await productsCacheVer();
     const cacheKey = `${environment}:product:${ver}:${data.slug}`;
@@ -189,6 +192,7 @@ export const getSuggestedFn = createServerFn({ method: 'GET' })
   .validator(z.object({ slug: z.string().max(128), limit: z.number().int().min(1).max(12).optional() }))
   .handler(async ({ data }) => {
     await ensureSeed();
+    await ensureCloudinaryAssets();
     if (!isSafeSlug(data.slug)) return [];
     const [current] = await db.select().from(products).where(eq(products.slug, data.slug)).limit(1);
     if (!current) return [];
@@ -212,6 +216,7 @@ export const getCategoriesFn = createServerFn({ method: 'GET' }).handler(async (
 
 export const getCategoryStatsFn = createServerFn({ method: 'GET' }).handler(async () => {
   await ensureSeed();
+  await ensureCloudinaryAssets();
   const ver = await productsCacheVer();
   const cacheKey = `${environment}:category-stats:${ver}`;
   const cached = await redis.get(cacheKey);
@@ -221,7 +226,11 @@ export const getCategoryStatsFn = createServerFn({ method: 'GET' }).handler(asyn
     count: sql<number>`count(*)::int`,
     image: sql<string>`min(${products.image})`,
   }).from(products).groupBy(products.category).orderBy(asc(products.category));
-  const result = rows.map((row) => ({ category: row.category, count: row.count, image: row.image }));
+  const result = rows.map((row) => ({
+    category: row.category,
+    count: row.count,
+    image: resolveProductImageUrl(row.image),
+  }));
   await redis.setex(cacheKey, categoriesCacheTtl, JSON.stringify(result));
   return result;
 });
