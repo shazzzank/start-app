@@ -5,8 +5,8 @@ export const AWS_ENDPOINT = 'http://localhost:9000';
 export const AWS_ACCESS_KEY = 'minioadmin';
 export const AWS_SECRET_KEY = 'minioadmin';
 export const AWS_BUCKET = 'storage';
-export const DATABASE_URL = 'postgresql://moses@127.0.0.1/start';
-export const REDIS_URL = 'redis://localhost:6379';
+export const DATABASE_URL = process.env.DATABASE_URL ?? 'postgresql://moses@127.0.0.1/start';
+export const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
 export const PORT = 3000;
 export const TABLE_PREFIX = 'start_api_';
 export const STATUS_CODES = {
@@ -39,4 +39,11 @@ export const SECONDARY_COLOR = '#9eacad';
 export const ACCENT_COLOR = '#2aa198';
 
 export const SITENAME = 'Start';
+export const cloudinaryCloudName = process.env.CLOUDINARY_CLOUD_NAME ?? '';
+export const fallbackImage = cloudinaryCloudName
+  ? `https://res.cloudinary.com/${cloudinaryCloudName}/image/upload/f_auto,q_auto/start/fallback`
+  : '/fallback.svg';
 export const s3Path = 'start/uploads'
+export const productsPageSize = 24
+export const productsCacheTtl = 60
+export const categoriesCacheTtl = 300
