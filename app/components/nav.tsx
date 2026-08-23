@@ -58,12 +58,13 @@ export default function Nav() {
   const crumbs = buildBreadcrumbs(pathname, params);
 
   useEffect(() => {
-    if (!menuOpen) return;
-    const close = (event: MouseEvent) => {
-      menuRef.current && !menuRef.current.contains(event.target as Node) && setMenuOpen(false);
-    };
-    document.addEventListener('mousedown', close);
-    return () => document.removeEventListener('mousedown', close);
+    if (menuOpen) {
+      const close = (event: MouseEvent) => {
+        menuRef.current && !menuRef.current.contains(event.target as Node) && setMenuOpen(false);
+      };
+      document.addEventListener('mousedown', close);
+      return () => document.removeEventListener('mousedown', close);
+    }
   }, [menuOpen]);
 
   const linkLabel = (label: string, count?: number) => count && count > 0 ? `${label}, ${count} items` : label;

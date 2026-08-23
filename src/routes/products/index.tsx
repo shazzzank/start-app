@@ -1,21 +1,11 @@
 import { createFileRoute, useNavigate, useRouterState } from '@tanstack/react-router';
-import { useInfiniteQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import Page from '@/app/components/page';
 import ProductCard from '@/app/components/product-card';
 import { productsPageSize, pageHead } from '@/app/constants';
+import { toProductQuery, useProductsInfiniteQuery } from '@/app/queries';
 import type { ProductSearch } from '@/app/types';
-import { getCategoriesFn, getProductsFn } from '@/app/shop-api';
-
-function toProductQuery(search: ProductSearch) {
-  return {
-    q: search.q || undefined,
-    category: search.category === 'all' ? undefined : search.category,
-    sort: search.sort,
-    minPrice: search.minPrice ? Number(search.minPrice) : undefined,
-    maxPrice: search.maxPrice ? Number(search.maxPrice) : undefined,
-  };
-}
+import { getCategoriesFn, getProductsFn } from '@/app/api';
 
 export const Route = createFileRoute('/products/')({
   validateSearch: (search: Record<string, unknown>): ProductSearch => ({
@@ -59,22 +49,11 @@ function ProductsPage() {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const { q, category, sort, minPrice, maxPrice } = search;
   const [qDraft, setQDraft] = useState(q);
-  const productsQuery = useInfiniteQuery({
-    queryKey: ['products', productQuery],
-    queryFn: ({ pageParam = 0 }) => getProductsFn({ data: { ...productQuery, offset: pageParam, limit: productsPageSize } }),
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, allPages) => {
-      if (!lastPage.hasMore) return undefined;
-      return allPages.reduce((n, page) => n + page.items.length, 0);
-    },
-    initialData: JSON.stringify(productQuery) === JSON.stringify(loaderQuery)
-      ? { pages: [initialPage], pageParams: [0] }
-      : undefined,
-    staleTime: 30_000,
-  });
+  const productsQuery = useProductsInfiniteQuery(productQuery, { page: initialPage, filters: loaderQuery });
   const { fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = productsQuery;
   const products = productsQuery.data?.pages.flatMap((page) => page.items) ?? [];
   const total = productsQuery.data?.pages[0]?.total ?? 0;
+  const loading = (routerLoading || isLoading) && products.length === 0;
 
   useEffect(() => { setQDraft(q); }, [q]);
 
@@ -85,16 +64,15 @@ function ProductsPage() {
     return () => clearTimeout(timer);
   }, [qDraft, q, navigate]);
 
-  const loading = (routerLoading || isLoading) && !products.length;
-
   useEffect(() => {
     const node = sentinelRef.current;
-    if (loading || !node || !hasNextPage || isFetchingNextPage) return;
-    const observer = new IntersectionObserver((entries) => {
-      entries[0]?.isIntersecting && fetchNextPage();
-    }, { rootMargin: '240px' });
-    observer.observe(node);
-    return () => observer.disconnect();
+    if (!loading && node && hasNextPage && !isFetchingNextPage) {
+      const observer = new IntersectionObserver((entries) => {
+        entries[0]?.isIntersecting && fetchNextPage();
+      }, { rootMargin: '240px' });
+      observer.observe(node);
+      return () => observer.disconnect();
+    }
   }, [loading, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const patch = (partial: Partial<ProductSearch>) => navigate({ search: { ...search, ...partial } });
@@ -163,9 +141,7 @@ function ProductsPage() {
           </form>
           {loading ? (
             <p className='desc' role='status'>Loading products…</p>
-          ) : !products.length ? (
-            <p className='desc' role='status'>No products match your filters.</p>
-          ) : (
+          ) : products.length ? (
             <>
               <div className='grid' aria-live='polite' aria-label={`${products.length} of ${total || products.length} products`}>
                 {products.map((product) => <ProductCard key={product.slug} product={product} />)}
@@ -173,6 +149,8 @@ function ProductsPage() {
               <div ref={sentinelRef} className='h-px w-full' aria-hidden='true' />
               {isFetchingNextPage && <p className='desc mt-6' role='status'>Loading more products…</p>}
             </>
+          ) : (
+            <p className='desc' role='status'>No products match your filters.</p>
           )}
         </div>
       </main>

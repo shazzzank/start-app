@@ -41,12 +41,15 @@ const defaultCountry = 'IN';
 const defaultCurrency: ShopCurrency = 'INR';
 
 function isPrivateIp(ip: string) {
-  if (!ip || ip === '127.0.0.1' || ip === '::1') return true;
-  if (ip.startsWith('10.') || ip.startsWith('192.168.')) return true;
-  if (ip.startsWith('fc00:') || ip.startsWith('fd')) return true;
-  const private172 = ip.match(/^172\.(\d+)\./);
-  if (private172 && Number(private172[1]) >= 16 && Number(private172[1]) <= 31) return true;
-  return false;
+  if (ip) {
+    if (ip === '127.0.0.1' || ip === '::1') return true;
+    if (ip.startsWith('10.') || ip.startsWith('192.168.')) return true;
+    if (ip.startsWith('fc00:') || ip.startsWith('fd')) return true;
+    const private172 = ip.match(/^172\.(\d+)\./);
+    if (private172 && Number(private172[1]) >= 16 && Number(private172[1]) <= 31) return true;
+    return false;
+  }
+  return true;
 }
 
 function isCountryCode(value: string | null | undefined) {
@@ -67,9 +70,10 @@ async function countryFromIp(ip: string) {
     const res = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}?fields=country_code,success`, {
       signal: AbortSignal.timeout(3000),
     });
-    if (!res.ok) return defaultCountry;
-    const data = await res.json() as { success?: boolean; country_code?: string };
-    if (data.success && isCountryCode(data.country_code)) return data.country_code!.toUpperCase();
+    if (res.ok) {
+      const data = await res.json() as { success?: boolean; country_code?: string };
+      if (data.success && isCountryCode(data.country_code)) return data.country_code!.toUpperCase();
+    }
   } catch {}
   return defaultCountry;
 }

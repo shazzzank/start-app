@@ -1,10 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { asc } from 'drizzle-orm';
 import { absoluteUrl } from '@/app/constants';
-import { db } from '@/app/config';
-import { ensureCloudinaryAssets } from '@/app/cloudinary';
-import { products } from '@/app/db-schema';
-import { ensureSeed } from '@/app/seed';
+import { db } from '@/app/server/db';
+import { ensureCloudinaryAssets } from '@/app/server/cloudinary';
+import { products } from '@/app/server/schema';
+import { ensureSeed } from '@/app/server/seed';
 
 function urlEntry(loc: string, changefreq: string, priority: string) {
   return `<url><loc>${loc}</loc><changefreq>${changefreq}</changefreq><priority>${priority}</priority></url>`;

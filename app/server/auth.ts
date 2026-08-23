@@ -1,9 +1,10 @@
 import { scryptSync, randomBytes, timingSafeEqual } from 'node:crypto';
 import { deleteCookie, getCookie, setCookie } from '@tanstack/react-start/server';
 import { eq, and, gt } from 'drizzle-orm';
-import { db, redis } from '@/app/config';
-import { sessions, shopUsers } from '@/app/db-schema';
 import { environment } from '@/app/constants';
+import { db } from '@/app/server/db';
+import { redisExpire, redisIncr } from '@/app/server/redis';
+import { sessions, shopUsers } from '@/app/server/schema';
 
 const sessionCookie = 'start_session';
 const sessionDays = 7;
@@ -23,19 +24,10 @@ export function isStrongPassword(password: string) {
     && /[^a-zA-Z0-9]/.test(password);
 }
 
-export function escapeLike(value: string) {
-  return value.replace(/[%_\\]/g, '\\$&');
-}
-
-export function isSafeSlug(value: string) {
-  return /^[a-z0-9-]{1,128}$/.test(value);
-}
-
-// Redis-backed rate limit — one key per scope, cluster-safe single-key ops.
 export async function rateLimit(key: string, limit: number, windowSec: number) {
   const redisKey = `${environment}:ratelimit:${key}`;
-  const count = await redis.incr(redisKey);
-  count === 1 && await redis.expire(redisKey, windowSec);
+  const count = await redisIncr(redisKey);
+  count === 1 && await redisExpire(redisKey, windowSec);
   return count <= limit;
 }
 
@@ -47,10 +39,12 @@ export function hashPassword(password: string) {
 
 export function verifyPassword(password: string, stored: string) {
   const [salt, hash] = stored.split(':');
-  if (!salt || !hash) return false;
-  const hashBuf = Buffer.from(hash, 'hex');
-  const testBuf = scryptSync(password, salt, 64);
-  return hashBuf.length === testBuf.length && timingSafeEqual(hashBuf, testBuf);
+  if (salt && hash) {
+    const hashBuf = Buffer.from(hash, 'hex');
+    const testBuf = scryptSync(password, salt, 64);
+    return hashBuf.length === testBuf.length && timingSafeEqual(hashBuf, testBuf);
+  }
+  return false;
 }
 
 export function sessionExpiry() {
@@ -77,24 +71,25 @@ export function clearSessionCookie() {
 
 export async function getSessionUser() {
   const sessionId = readSessionId();
-  if (!sessionId) return null;
-  const rows = await db
-    .select({
-      id: shopUsers.id,
-      name: shopUsers.name,
-      email: shopUsers.email,
-      role: shopUsers.role,
-    })
-    .from(sessions)
-    .innerJoin(shopUsers, eq(sessions.user_id, shopUsers.id))
-    .where(and(eq(sessions.id, sessionId), gt(sessions.expires_at, new Date())))
-    .limit(1);
-  return rows[0] ?? null;
+  if (sessionId) {
+    const rows = await db
+      .select({
+        id: shopUsers.id,
+        name: shopUsers.name,
+        email: shopUsers.email,
+        role: shopUsers.role,
+      })
+      .from(sessions)
+      .innerJoin(shopUsers, eq(sessions.user_id, shopUsers.id))
+      .where(and(eq(sessions.id, sessionId), gt(sessions.expires_at, new Date())))
+      .limit(1);
+    return rows[0] ?? null;
+  }
+  return null;
 }
 
 export async function requireUser(roles?: Array<'customer' | 'admin'>) {
   const user = await getSessionUser();
-  if (!user) return null;
-  if (roles && !roles.includes(user.role as 'customer' | 'admin')) return null;
-  return user;
+  if (user && (!roles || roles.includes(user.role as 'customer' | 'admin'))) return user;
+  return null;
 }

@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router';
+import { Link, type LinkProps } from '@tanstack/react-router';
 import type { ComponentProps, ReactNode } from 'react';
 
 type Variant = 'primary' | 'outline' | 'danger';
@@ -10,15 +10,16 @@ const styles: Record<Variant, string> = {
   danger: 'btn-d',
 };
 
-type Props = {
+type Shared = {
   variant?: Variant;
   size?: Size;
   className?: string;
   children: ReactNode;
-} & (
-  | ({ to: string; params?: Record<string, string> } & Omit<ComponentProps<typeof Link>, 'children' | 'className'>)
-  | ({ to?: undefined } & ComponentProps<'button'>)
-);
+};
+
+type Props =
+  | (Shared & { to: LinkProps['to'] } & Omit<LinkProps, 'children' | 'className' | 'to'>)
+  | (Shared & { to?: undefined } & ComponentProps<'button'>);
 
 export default function Button({
   variant = 'primary',
@@ -30,8 +31,8 @@ export default function Button({
   const classes = ['btn', styles[variant], size === 'sm' ? 'btn-sm' : 'btn-md', className].filter(Boolean).join(' ');
 
   if ('to' in props && props.to) {
-    const { to, params, ...rest } = props;
-    return <Link to={to} params={params} className={classes} {...rest}>{children}</Link>;
+    const { to, ...rest } = props;
+    return <Link to={to} className={classes} {...rest}>{children}</Link>;
   }
 
   const { type = 'button', ...rest } = props as ComponentProps<'button'>;

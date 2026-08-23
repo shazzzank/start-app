@@ -34,11 +34,11 @@ function LoginPage() {
     const message = mode === 'login'
       ? await login(email, password)
       : await register(name, email, password);
-    if (message) {
-      setError(message);
+    if (!message) {
+      navigate({ to: '/' });
       return;
     }
-    navigate({ to: '/' });
+    setError(message);
   }
 
   return (

@@ -131,14 +131,14 @@ Admin → /login → /admin → stat panels (catalogue, orders, users, alerts) �
 | Bags | 26 | Seoul Market Tote, Osaka Weekender Bag, Canvas Backpack |
 | Wear | 26 | Linen Studio Apron, Seoul Linen Scarf, Cotton Tee |
 
-**Seed behaviour** (`app/seed.ts`)
+**Seed behaviour** (`app/server/seed.ts`)
 
 - `ensureSeed()` runs on first server-fn call per process.
 - Creates admin from `ADMIN_EMAIL` / `ADMIN_PASSWORD` env vars (see §2); removes legacy `admin@start.local` account.
 - **Upserts by slug:** inserts any catalogue row not already in DB (safe for existing databases).
-- Export: `catalog` array (106 items), `mapProduct()` for API responses.
+- Export: `catalog` array (106 items). Product DTO mapping: `mapProduct()` in `app/server/product.ts`.
 
-**Imagery** — Picsum URLs per slug. Fallback: `public/fallback.svg` via shared `Image` component (`onError` handler, `decorative` prop for redundant alts).
+**Imagery** — Cloudinary delivery URLs (local `/products/…` paths resolved in `app/lib/images.ts`). Fallback: shared `Image` component (`onError` handler, `decorative` prop for redundant alts).
 
 ---
 
@@ -149,10 +149,10 @@ Admin → /login → /admin → stat panels (catalogue, orders, users, alerts) �
 | Framework | TanStack Start, TanStack Router (file routes) |
 | UI | React 19, Tailwind CSS 4, `app/styles.css` |
 | Data | Drizzle ORM + PostgreSQL, table prefix `start_api_` |
-| Client data | TanStack Query via `ShopProvider` |
+| Client data | TanStack Query via `app/queries.ts` + `ShopProvider` |
 | Auth cookie | `start_session` → `start_api_sessions` |
-| Infra | Postgres, Redis (`app/config.ts`), Cloudinary |
-| Media | Cloudinary (`app/cloudinary.ts`) — images, fonts, fallback; admin upload/remove |
+| Infra | Postgres, Redis (`app/server/db.ts`, `app/server/redis.ts`), Cloudinary |
+| Media | Cloudinary (`app/server/cloudinary.ts` + `app/lib/images.ts`) — images, fonts, fallback; admin upload/remove |
 
 ---
 
@@ -169,13 +169,13 @@ Admin → /login → /admin → stat panels (catalogue, orders, users, alerts) �
 | `start_api_order_items` | Line-item snapshot |
 | `start_api_notifications` | Per-user alerts |
 
-Schema file: `app/db-schema.ts`
+Schema file: `app/server/schema.ts`
 
 ---
 
 ## 9. Server API (Technical)
 
-All handlers in `app/shop-api.ts` via `createServerFn`:
+Handlers under `app/api/` (barrel: `app/api/index.ts`) via `createServerFn`:
 
 | Domain | Functions |
 |--------|-----------|
@@ -188,7 +188,7 @@ All handlers in `app/shop-api.ts` via `createServerFn`:
 | Notifications | `getNotificationsFn`, `markNotificationReadFn` |
 | Admin | `getAdminStatsFn`, `getAdminUsersFn`, `getAdminProductsFn`, `updateProductFn`, `deleteProductFn`, `deleteOrderFn`, `deleteUserFn`, `deleteNotificationFn` |
 
-Auth helpers: `app/auth.ts` · Session SSR: root loader in `src/routes/__root.tsx`
+Auth helpers: `app/server/auth.ts` · Session SSR: root loader in `src/routes/__root.tsx`
 
 ---
 

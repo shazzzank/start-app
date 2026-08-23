@@ -1,65 +1,32 @@
 import { createFileRoute, notFound } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
 import Button from '@/app/components/button';
 import Page from '@/app/components/page';
 import ProductCard from '@/app/components/product-card';
 import Image from '@/app/components/image';
 import { useShop } from '@/app/components/shop-provider';
-import { SITENAME, absoluteUrl, pageHead } from '@/app/constants';
-import { getProductFn, getSuggestedFn } from '@/app/shop-api';
+import { pageHead } from '@/app/constants';
+import { useSuggestedProductsQuery } from '@/app/queries';
+import { getProductFn } from '@/app/api';
 
 export const Route = createFileRoute('/products/$slug')({
   loader: async ({ params }) => {
     const product = await getProductFn({ data: { slug: params.slug } });
-    if (!product) throw notFound();
-    return product;
+    if (product) return product;
+    throw notFound();
   },
   head: ({ loaderData }) => {
-    if (!loaderData) {
+    if (loaderData) {
       return pageHead({
-        title: 'Product',
-        description: 'Product details on Start.',
-        path: '/products',
-        noindex: true,
+        title: loaderData.name,
+        description: loaderData.summary || loaderData.description,
+        path: `/products/${loaderData.slug}`,
       });
     }
-    const path = `/products/${loaderData.slug}`;
-    const blurb = loaderData.summary || loaderData.description;
     return pageHead({
-      title: loaderData.name,
-      description: blurb.length >= 110 ? blurb : `${blurb} Buy ${loaderData.name} from Start — live stock and tracked orders.`,
-      path,
-      image: loaderData.image,
-      ogType: 'product',
-      jsonLd: [
-        {
-          '@context': 'https://schema.org',
-          '@type': 'Product',
-          name: loaderData.name,
-          description: loaderData.description || loaderData.summary,
-          image: [loaderData.image],
-          sku: loaderData.slug,
-          category: loaderData.category,
-          brand: { '@type': 'Brand', name: SITENAME },
-          offers: {
-            '@type': 'Offer',
-            url: absoluteUrl(path),
-            priceCurrency: 'INR',
-            price: loaderData.price,
-            availability: loaderData.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-            itemCondition: 'https://schema.org/NewCondition',
-          },
-        },
-        {
-          '@context': 'https://schema.org',
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Home', item: absoluteUrl('/') },
-            { '@type': 'ListItem', position: 2, name: 'Shop', item: absoluteUrl('/products') },
-            { '@type': 'ListItem', position: 3, name: loaderData.name, item: absoluteUrl(path) },
-          ],
-        },
-      ],
+      title: 'Product',
+      description: 'Product details on Start.',
+      path: '/products',
+      noindex: true,
     });
   },
   component: ProductDetailPage,
@@ -69,10 +36,7 @@ function ProductDetailPage() {
   const product = Route.useLoaderData();
   const { user, wishlist, toggleWishlist, addToCart, price } = useShop();
   const saved = wishlist.includes(product.slug);
-  const { data: suggested = [] } = useQuery({
-    queryKey: ['suggested', product.slug],
-    queryFn: () => getSuggestedFn({ data: { slug: product.slug, limit: 3 } }),
-  });
+  const { data: suggested = [] } = useSuggestedProductsQuery(product.slug);
 
   return (
     <Page>

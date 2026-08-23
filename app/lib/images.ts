@@ -5,11 +5,14 @@ function activeCloudName() {
 }
 
 export function resolveProductImageUrl(src: string) {
-  if (!src.startsWith('/products/')) return src;
-  const cloudName = activeCloudName();
-  if (!cloudName) return src;
-  const publicId = `start${src.replace(/\.[^.]+$/, '')}`;
-  return `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto/${publicId}`;
+  if (src.startsWith('/products/')) {
+    const cloudName = activeCloudName();
+    if (cloudName) {
+      const publicId = `start${src.replace(/\.[^.]+$/, '')}`;
+      return `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto/${publicId}`;
+    }
+  }
+  return src;
 }
 
 export function isCloudinaryImageUrl(value: string) {
@@ -19,6 +22,8 @@ export function isCloudinaryImageUrl(value: string) {
 
 export function optimizeImageUrl(src: string, width = 900) {
   src = resolveProductImageUrl(src);
-  if (!isCloudinaryImageUrl(src) || src.includes(',w_')) return src;
-  return src.replace('/upload/', `/upload/f_auto,q_auto,w_${width},c_limit/`);
+  if (isCloudinaryImageUrl(src) && !src.includes(',w_')) {
+    return src.replace('/upload/', `/upload/f_auto,q_auto,w_${width},c_limit/`);
+  }
+  return src;
 }

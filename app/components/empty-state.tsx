@@ -1,3 +1,4 @@
+import type { LinkProps } from '@tanstack/react-router';
 import Button from '@/app/components/button';
 
 export default function EmptyState({
@@ -9,7 +10,7 @@ export default function EmptyState({
 }: {
   title: string;
   description: string;
-  href: string;
+  href: LinkProps['to'];
   action: string;
   inline?: boolean;
 }) {

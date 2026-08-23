@@ -1,6 +1,6 @@
 import { useEffect, useState, type ComponentProps } from 'react';
 import { fallbackImage } from '@/app/constants';
-import { optimizeImageUrl } from '@/app/cloudinary-url';
+import { optimizeImageUrl } from '@/app/lib/images';
 
 type Props = {
   src?: string | null;

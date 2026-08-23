@@ -1,9 +1,8 @@
 import { eq } from 'drizzle-orm';
-import { db } from '@/app/config';
-import { resolveProductImageUrl } from '@/app/cloudinary-url';
-import { products, sessions, shopUsers } from '@/app/db-schema';
-import { hashPassword } from '@/app/auth';
-import type { Product, ProductCategory, SeedProduct } from '@/app/types';
+import type { ProductCategory, SeedProduct } from '@/app/types';
+import { hashPassword } from '@/app/server/auth';
+import { db } from '@/app/server/db';
+import { products, sessions, shopUsers } from '@/app/server/schema';
 
 const categoryDefaults: Record<ProductCategory, string> = {
   Stationery: '/products/stationery/notebook.jpg',
@@ -282,28 +281,4 @@ export async function ensureSeed() {
 
     seeded = true;
   }
-}
-
-export function mapProduct(row: {
-  id: string;
-  slug: string;
-  name: string;
-  category: string;
-  summary: string;
-  description: string;
-  price: number;
-  stock: number;
-  image: string;
-}): Product {
-  return {
-    id: row.id,
-    slug: row.slug,
-    name: row.name,
-    category: row.category,
-    summary: row.summary,
-    description: row.description,
-    price: row.price,
-    stock: row.stock,
-    image: resolveProductImageUrl(row.image),
-  };
 }

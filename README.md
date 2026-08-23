@@ -29,12 +29,12 @@ Mock checkout (no payment gateway) keeps scope focused on architecture, UX, and 
 
 ### Server-first state
 
-Shopper data never touches `localStorage`. Sessions use an HttpOnly cookie (`start_session`) backed by Postgres. Cart lines, wishlist rows, and notifications are queried through typed server functions (`createServerFn` in `app/shop-api.ts`). The root loader hydrates auth on first paint so the UI is correct before client JS runs.
+Shopper data never touches `localStorage`. Sessions use an HttpOnly cookie (`start_session`) backed by Postgres. Cart lines, wishlist rows, and notifications are queried through typed server functions (`createServerFn` under `app/api/`). The root loader hydrates auth on first paint so the UI is correct before client JS runs.
 
 ### Thin client, fat server
 
 - **TanStack Router** file routes with loaders for page data
-- **TanStack Query** in `ShopProvider` for mutations and cache invalidation after login/logout
+- **TanStack Query** hooks live in `app/queries.ts`; `ShopProvider` owns mutations and cache invalidation after login/logout
 - **Zod** validators on every server function input
 - **Drizzle ORM** for schema, queries, and migrations via `drizzle-kit push`
 
@@ -47,7 +47,7 @@ Shopper data never touches `localStorage`. Sessions use an HttpOnly cookie (`sta
 
 ### Security by default
 
-- Scrypt password hashing (`app/auth.ts`)
+- Scrypt password hashing (`app/server/auth.ts`)
 - Login/register rate limits in Redis
 - Role-gated APIs (`customer` vs `admin`)
 - Session rotation on login; `Secure` cookies in production
@@ -82,22 +82,35 @@ Solarized-dark palette (`#00141a` base, `#2aa198` accent), Gowun Batang + IBM Pl
 ```
 Browser
   └── TanStack Router (file routes in src/routes/)
-        └── ShopProvider (TanStack Query)
-              └── createServerFn handlers (app/shop-api.ts)
+        └── ShopProvider + app/queries.ts (TanStack Query)
+              └── createServerFn handlers (app/api/*)
                     ├── PostgreSQL (Drizzle)
                     ├── Redis (cache + rate limits)
                     └── Cloudinary (images, fonts, fallback)
 ```
 
+**Folder map**
+
+| Path | Role |
+|------|------|
+| `app/api/` | Server functions by domain — auth, products, cart, wishlist, orders, notifications, admin |
+| `app/server/` | Infra — db, redis, schema, auth sessions, cloudinary uploads, seed, notify, product mapper |
+| `app/lib/` | Shared helpers — image URLs (client-safe), locale/currency, utils |
+| `app/queries.ts` | All React Query hooks and cache keys |
+| `app/components/` | UI primitives + `ShopProvider` |
+| `app/constants.ts` / `app/types.ts` | Site config, SEO helpers, shared types |
+| `src/routes/` | Pages and loaders |
+
 **Key files**
 
 | Path | Role |
 |------|------|
-| `app/shop-api.ts` | All server functions — auth, catalogue, cart, orders, admin |
-| `app/seed.ts` | 106-product catalogue generator + `ensureSeed()` |
-| `app/cloudinary.ts` | Pexels → Cloudinary migration, admin upload helpers |
-| `app/auth.ts` | Sessions, cookies, password hashing, rate limits |
-| `app/db-schema.ts` | Drizzle schema |
+| `app/api/index.ts` | Barrel re-export of every server function |
+| `app/server/seed.ts` | 106-product catalogue + `ensureSeed()` |
+| `app/server/cloudinary.ts` | Pexels → Cloudinary migration, admin upload helpers |
+| `app/lib/images.ts` | Client-safe Cloudinary URL resolve/optimize |
+| `app/server/auth.ts` | Sessions, cookies, password hashing, rate limits |
+| `app/server/schema.ts` | Drizzle schema |
 | `src/routes/__root.tsx` | SSR session, locale, asset URLs |
 | `app/components/shop-provider.tsx` | Client shop state via `useShop()` |
 

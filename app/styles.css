@@ -17,6 +17,20 @@
   --color-red: #dc322f;
 }
 
+@font-face {
+  font-family: "Gowun Batang";
+  src: var(--font-primary-src);
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans KR";
+  src: var(--font-secondary-src);
+  font-weight: 300 600;
+  font-display: swap;
+}
+
 @keyframes drift {
   0%, 100% { background-position: 0% 40%, 100% 60%, 50% 0%; }
   50% { background-position: 80% 20%, 20% 80%, 40% 100%; }
@@ -44,15 +58,6 @@ body {
 
 .skip-link {
   @apply sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-sm focus:bg-accent focus:px-4 focus:py-2 focus:text-primary focus:outline-none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
 }
 
 .row { @apply flex gap-5 items-center w-full; }
@@ -264,6 +269,15 @@ button.stat { @apply cursor-pointer text-left w-full; }
 .cat-tile-body { @apply flex flex-1 flex-col gap-1 p-5; }
 .cats { @apply mt-6 flex flex-wrap gap-3; }
 .cat-link { @apply border border-highlight px-4 py-2 text-sm text-fg transition-colors duration-200 hover:border-accent hover:text-accent; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 
 @media (max-width: 768px) {
   .nav { @apply grid-cols-1; }

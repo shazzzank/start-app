@@ -1,5 +1,7 @@
 import { getApps, initializeApp } from 'firebase/app';
 import { getAnalytics, isSupported, logEvent, type Analytics } from 'firebase/analytics';
+import { useEffect } from 'react';
+import { useRouterState } from '@tanstack/react-router';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? '',
@@ -18,11 +20,12 @@ function analyticsClient() {
   if (analytics) return Promise.resolve(analytics);
   if (ready) return ready;
   ready = (async () => {
-    if (typeof window === 'undefined' || !firebaseConfig.apiKey || !firebaseConfig.appId) return null;
-    if (!(await isSupported())) return null;
-    const app = getApps()[0] ?? initializeApp(firebaseConfig);
-    analytics = getAnalytics(app);
-    return analytics;
+    if (typeof window !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.appId && await isSupported()) {
+      const app = getApps()[0] ?? initializeApp(firebaseConfig);
+      analytics = getAnalytics(app);
+      return analytics;
+    }
+    return null;
   })();
   return ready;
 }
@@ -42,4 +45,24 @@ export function trackButton(name: string) {
   button_name && void analyticsClient().then((client) => {
     client && logEvent(client, 'button_click', { button_name });
   });
+}
+
+export function AnalyticsTracker() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const search = useRouterState({ select: (s) => s.location.searchStr });
+  useEffect(() => {
+    trackPageView(`${pathname}${search}`);
+  }, [pathname, search]);
+  useEffect(() => {
+    const onClick = (event: MouseEvent) => {
+      const el = (event.target as HTMLElement | null)?.closest('button, a.btn') as HTMLElement | null;
+      if (el && el.getAttribute('aria-hidden') !== 'true') {
+        const name = el.getAttribute('aria-label') || el.textContent || '';
+        trackButton(name);
+      }
+    };
+    document.addEventListener('click', onClick, true);
+    return () => document.removeEventListener('click', onClick, true);
+  }, []);
+  return null;
 }

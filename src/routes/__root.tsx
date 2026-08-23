@@ -1,12 +1,12 @@
 /// <reference types="vite/client" />
-import { useEffect, useState } from 'react';
-import { Outlet, createRootRoute, HeadContent, Scripts, useRouterState } from '@tanstack/react-router';
+import { useState, type CSSProperties } from 'react';
+import { Outlet, createRootRoute, HeadContent, Scripts } from '@tanstack/react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PRIMARY_COLOR, siteDescription, siteTitle } from '@/app/constants';
-import { trackButton, trackPageView } from '@/app/firebase';
+import { AnalyticsTracker } from '@/app/firebase';
 import appCss from '@/app/styles.css?url';
 import { ShopProvider } from '@/app/components/shop-provider';
-import { getAssetUrlsFn, getLocaleFn, getSessionFn } from '@/app/shop-api';
+import { getAssetUrlsFn, getLocaleFn, getSessionFn } from '@/app/api';
 
 export const Route = createRootRoute({
   loader: async () => {
@@ -43,25 +43,6 @@ export const Route = createRootRoute({
   component: RootComponent,
 });
 
-function AnalyticsTracker() {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const search = useRouterState({ select: (s) => s.location.searchStr });
-  useEffect(() => {
-    trackPageView(`${pathname}${search}`);
-  }, [pathname, search]);
-  useEffect(() => {
-    const onClick = (event: MouseEvent) => {
-      const el = (event.target as HTMLElement | null)?.closest('button, a.btn') as HTMLElement | null;
-      if (!el || el.getAttribute('aria-hidden') === 'true') return;
-      const name = el.getAttribute('aria-label') || el.textContent || '';
-      trackButton(name);
-    };
-    document.addEventListener('click', onClick, true);
-    return () => document.removeEventListener('click', onClick, true);
-  }, []);
-  return null;
-}
-
 function RootComponent() {
   const initial = Route.useLoaderData();
   const [client] = useState(() => {
@@ -71,14 +52,18 @@ function RootComponent() {
     queryClient.setQueryData(['assets'], initial.assets);
     return queryClient;
   });
-  const fontCss = initial.assets.fontPrimary && initial.assets.fontSecondary
-    ? `@font-face{font-family:"Gowun Batang";src:url("${initial.assets.fontPrimary}") format("truetype");font-weight:400 700;font-display:swap}@font-face{font-family:"IBM Plex Sans KR";src:url("${initial.assets.fontSecondary}") format("truetype");font-weight:300 600;font-display:swap}`
-    : '';
   return (
-    <html lang='en'>
+    <html
+      lang='en'
+      style={initial.assets.fontPrimary && initial.assets.fontSecondary
+        ? {
+          '--font-primary-src': `url("${initial.assets.fontPrimary}") format("truetype")`,
+          '--font-secondary-src': `url("${initial.assets.fontSecondary}") format("truetype")`,
+        } as CSSProperties
+        : undefined}
+    >
       <head>
         <HeadContent />
-        {fontCss && <style dangerouslySetInnerHTML={{ __html: fontCss }} />}
       </head>
       <body>
         <QueryClientProvider client={client}>
@@ -92,4 +77,3 @@ function RootComponent() {
     </html>
   );
 }
-

@@ -1,16 +1,11 @@
 import path from 'path';
 import winston from 'winston';
-import Redis from 'ioredis';
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { DATABASE_URL, REDIS_URL } from '@/app/constants';
+import { DATABASE_URL } from '@/app/constants';
+
 
 const isLocalDb = /localhost|127\.0\.0\.1/.test(DATABASE_URL);
-export const redis = new Redis(REDIS_URL, {
-  maxRetriesPerRequest: 2,
-  enableReadyCheck: false,
-  ...(REDIS_URL.startsWith('rediss://') ? { tls: {} } : {}),
-});
 const pool = new Pool({
   connectionString: DATABASE_URL,
   max: 20,
