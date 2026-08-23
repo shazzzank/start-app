@@ -3,9 +3,16 @@ import { useQuery } from '@tanstack/react-query';
 import Button from '@/app/components/button';
 import Page from '@/app/components/page';
 import { useShop } from '@/app/components/shop-provider';
+import { siteTitle } from '@/app/constants';
 import { getNotificationsFn, markNotificationReadFn } from '@/app/shop-api';
 
 export const Route = createFileRoute('/notifications')({
+  head: () => ({
+    meta: [
+      { title: siteTitle('Alerts') },
+      { name: 'description', content: 'Order and account notifications on Start.' },
+    ],
+  }),
   component: NotificationsPage,
 });
 

@@ -3,7 +3,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import Page from '@/app/components/page';
 import ProductCard from '@/app/components/product-card';
-import { productsPageSize } from '@/app/constants';
+import { productsPageSize, siteTitle } from '@/app/constants';
 import type { ProductSearch } from '@/app/types';
 import { getCategoriesFn, getProductsFn } from '@/app/shop-api';
 
@@ -34,6 +34,12 @@ export const Route = createFileRoute('/products/')({
     ]);
     return { categories, initialPage, query };
   },
+  head: () => ({
+    meta: [
+      { title: siteTitle('Shop') },
+      { name: 'description', content: 'Browse the Start catalogue — stationery, home, bags, and wear.' },
+    ],
+  }),
   component: ProductsPage,
 });
 

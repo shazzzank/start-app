@@ -5,6 +5,7 @@ import Page from '@/app/components/page';
 import ProductCard from '@/app/components/product-card';
 import Image from '@/app/components/image';
 import { useShop } from '@/app/components/shop-provider';
+import { siteTitle } from '@/app/constants';
 import { getProductFn, getSuggestedFn } from '@/app/shop-api';
 
 export const Route = createFileRoute('/products/$slug')({
@@ -13,6 +14,12 @@ export const Route = createFileRoute('/products/$slug')({
     if (!product) throw notFound();
     return product;
   },
+  head: ({ loaderData }) => ({
+    meta: [
+      { title: siteTitle(loaderData?.name) },
+      { name: 'description', content: loaderData?.summary ?? 'Product details on Start.' },
+    ],
+  }),
   component: ProductDetailPage,
 });
 

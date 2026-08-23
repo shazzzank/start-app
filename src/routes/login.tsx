@@ -3,8 +3,15 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import Button from '@/app/components/button';
 import Page from '@/app/components/page';
 import { useShop } from '@/app/components/shop-provider';
+import { siteTitle } from '@/app/constants';
 
 export const Route = createFileRoute('/login')({
+  head: () => ({
+    meta: [
+      { title: siteTitle('Login') },
+      { name: 'description', content: 'Sign in or create a Start account to save favourites, cart, and orders.' },
+    ],
+  }),
   component: LoginPage,
 });
 

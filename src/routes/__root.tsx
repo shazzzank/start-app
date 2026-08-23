@@ -1,8 +1,9 @@
 /// <reference types="vite/client" />
-import { useState } from 'react';
-import { Outlet, createRootRoute, HeadContent, Scripts } from '@tanstack/react-router';
+import { useEffect, useState } from 'react';
+import { Outlet, createRootRoute, HeadContent, Scripts, useRouterState } from '@tanstack/react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SITENAME } from '@/app/constants';
+import { siteTitle } from '@/app/constants';
+import { trackButton, trackPageView } from '@/app/firebase';
 import appCss from '@/app/styles.css?url';
 import { ShopProvider } from '@/app/components/shop-provider';
 import { getAssetUrlsFn, getLocaleFn, getSessionFn } from '@/app/shop-api';
@@ -20,7 +21,8 @@ export const Route = createRootRoute({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: SITENAME },
+      { title: siteTitle() },
+      { name: 'description', content: 'Objects for slow mornings and long evenings. Curated goods with account-backed cart, wishlist, and orders.' },
       { name: 'theme-color', content: '#00141a' },
     ],
   }),
@@ -39,6 +41,25 @@ export const Route = createRootRoute({
   },
   component: RootComponent,
 });
+
+function AnalyticsTracker() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const search = useRouterState({ select: (s) => s.location.searchStr });
+  useEffect(() => {
+    trackPageView(`${pathname}${search}`);
+  }, [pathname, search]);
+  useEffect(() => {
+    const onClick = (event: MouseEvent) => {
+      const el = (event.target as HTMLElement | null)?.closest('button, a.btn') as HTMLElement | null;
+      if (!el || el.getAttribute('aria-hidden') === 'true') return;
+      const name = el.getAttribute('aria-label') || el.textContent || '';
+      trackButton(name);
+    };
+    document.addEventListener('click', onClick, true);
+    return () => document.removeEventListener('click', onClick, true);
+  }, []);
+  return null;
+}
 
 function RootComponent() {
   const initial = Route.useLoaderData();
@@ -61,6 +82,7 @@ function RootComponent() {
       <body>
         <QueryClientProvider client={client}>
           <ShopProvider>
+            <AnalyticsTracker />
             <Outlet />
           </ShopProvider>
         </QueryClientProvider>

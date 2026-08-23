@@ -5,6 +5,7 @@ import { useState } from 'react';
 import Button from '@/app/components/button';
 import Page from '@/app/components/page';
 import { useShop } from '@/app/components/shop-provider';
+import { siteTitle } from '@/app/constants';
 import {
   deleteNotificationFn, deleteOrderFn, deleteProductFn, deleteUserFn, getAdminProductsFn, getAdminStatsFn, getAdminUsersFn,
   getOrdersFn, markNotificationReadFn, updateOrderStatusFn,
@@ -20,6 +21,12 @@ const panelTitles: Record<AdminPanel, string> = {
 };
 
 export const Route = createFileRoute('/admin')({
+  head: () => ({
+    meta: [
+      { title: siteTitle('Admin') },
+      { name: 'description', content: 'Start store dashboard for catalogue, orders, users, and alerts.' },
+    ],
+  }),
   component: AdminPage,
 });
 

@@ -19,6 +19,7 @@ export const SECONDARY_COLOR = '#9eacad';
 export const ACCENT_COLOR = '#2aa198';
 
 export const SITENAME = 'Start';
+export const siteTitle = (page?: string) => (page ? `${page} · ${SITENAME}` : SITENAME);
 export const cloudinaryCloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME ?? '';
 export const fallbackImage = cloudinaryCloudName
   ? `https://res.cloudinary.com/${cloudinaryCloudName}/image/upload/f_auto,q_auto/start/fallback`

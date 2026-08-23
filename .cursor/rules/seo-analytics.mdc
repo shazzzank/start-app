@@ -1,0 +1,13 @@
+---
+description: Every route needs SEO titles; Firebase page views and button clicks stay wired
+alwaysApply: true
+---
+
+# SEO titles + Firebase analytics
+
+When adding or editing routes/pages in this app:
+
+1. **Every route** must define `head.meta` with `{ title: siteTitle('…') }` (and a short `description`). Import `siteTitle` from `@/app/constants`. Dynamic pages use `loaderData` in `head`.
+2. **Do not remove** `AnalyticsTracker` from `src/routes/__root.tsx` — it fires `page_view` on navigation and `button_click` for `button` / `a.btn`.
+3. Interactive CTAs should use `@/app/components/button` (class `btn`) or a native `<button>` so clicks are tracked. Do not invent a parallel analytics path.
+4. Firebase web config lives in `VITE_FIREBASE_*` (local `.env` + Vercel). Keep `app/firebase.ts` and `vite.config.ts` `define` in sync when keys change.
