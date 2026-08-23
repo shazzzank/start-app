@@ -20,11 +20,12 @@ export const ACCENT_COLOR = '#2aa198';
 
 export const SITENAME = 'Start';
 export const siteDescription = 'Shop curated stationery, home goods, bags, and wear from Seoul and Osaka. Small-batch essentials with live stock and tracked orders.';
+export const homeTitle = 'Curated stationery, home, bags & wear';
 export const siteTitle = (page?: string) => {
-  if (!page) return SITENAME;
+  const label = page ?? homeTitle;
   const budget = 60 - SITENAME.length - 3;
-  const label = page.length > budget ? `${page.slice(0, Math.max(1, budget - 1)).trimEnd()}…` : page;
-  return `${label} · ${SITENAME}`;
+  const clipped = label.length > budget ? `${label.slice(0, Math.max(1, budget - 1)).trimEnd()}…` : label;
+  return `${clipped} · ${SITENAME}`;
 };
 export function absoluteUrl(path = '/') {
   const origin = typeof window !== 'undefined'

@@ -8,7 +8,7 @@ alwaysApply: true
 When adding or editing routes/pages in this app:
 
 1. **Every route** must use `pageHead({ … })` from `@/app/constants` (or keep root defaults). Do not hand-roll only `{ title, description }` — `pageHead` sets title, meta description (≤160 chars), Open Graph, Twitter card, and canonical URL.
-2. **Title rules:** `siteTitle('Page')` → `Page · Start` (home is just `Start`). Keep under ~60 characters; product names are truncated inside `siteTitle`. Titles must be unique per indexable URL and lead with the page topic, not only the brand.
+2. **Title rules:** format is always `{topic} · Start` via `siteTitle` / `pageHead` — never brand alone. Home uses `homeTitle` (“Curated stationery, home, bags & wear · Start”). Keep under ~60 characters; long product names truncate inside `siteTitle`. Titles must be unique per indexable URL and lead with the page topic (product, category, or shop intent), with brand last.
 3. **Description rules:** one unique sentence (~120–160 chars) that states what the page offers (category, product, or shop benefit). No duplicate boilerplate across routes. Prefer benefit + category/product keywords over filler.
 4. **Public vs private:** indexable pages = `/`, `/products`, `/products/$slug`. Account, cart/orders, wishlist, alerts, login, and admin must pass `noindex: true`. Search-result shop URLs (`?q=`) also use `noindex`.
 5. **Product pages:** pass `image`, `ogType: 'product'`, and JSON-LD `Product` + `BreadcrumbList` (via `pageHead` `jsonLd`). Keep `<h1>` as the product name and meaningful image `alt`.
