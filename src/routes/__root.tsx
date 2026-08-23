@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Outlet, createRootRoute, HeadContent, Scripts, useRouterState } from '@tanstack/react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { siteTitle } from '@/app/constants';
+import { PRIMARY_COLOR, siteDescription, siteTitle } from '@/app/constants';
 import { trackButton, trackPageView } from '@/app/firebase';
 import appCss from '@/app/styles.css?url';
 import { ShopProvider } from '@/app/components/shop-provider';
@@ -22,8 +22,9 @@ export const Route = createRootRoute({
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       { title: siteTitle() },
-      { name: 'description', content: 'Objects for slow mornings and long evenings. Curated goods with account-backed cart, wishlist, and orders.' },
-      { name: 'theme-color', content: '#00141a' },
+      { name: 'description', content: siteDescription },
+      { name: 'theme-color', content: PRIMARY_COLOR },
+      { name: 'robots', content: 'index, follow' },
     ],
   }),
   notFoundComponent: () => (

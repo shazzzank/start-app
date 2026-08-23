@@ -5,7 +5,7 @@ import Page from '@/app/components/page';
 import ProductCard from '@/app/components/product-card';
 import Image from '@/app/components/image';
 import { useShop } from '@/app/components/shop-provider';
-import { siteTitle } from '@/app/constants';
+import { SITENAME, absoluteUrl, pageHead } from '@/app/constants';
 import { getProductFn, getSuggestedFn } from '@/app/shop-api';
 
 export const Route = createFileRoute('/products/$slug')({
@@ -14,12 +14,54 @@ export const Route = createFileRoute('/products/$slug')({
     if (!product) throw notFound();
     return product;
   },
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: siteTitle(loaderData?.name) },
-      { name: 'description', content: loaderData?.summary ?? 'Product details on Start.' },
-    ],
-  }),
+  head: ({ loaderData }) => {
+    if (!loaderData) {
+      return pageHead({
+        title: 'Product',
+        description: 'Product details on Start.',
+        path: '/products',
+        noindex: true,
+      });
+    }
+    const path = `/products/${loaderData.slug}`;
+    const blurb = loaderData.summary || loaderData.description;
+    return pageHead({
+      title: loaderData.name,
+      description: blurb.length >= 110 ? blurb : `${blurb} Buy ${loaderData.name} from Start — live stock and tracked orders.`,
+      path,
+      image: loaderData.image,
+      ogType: 'product',
+      jsonLd: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: loaderData.name,
+          description: loaderData.description || loaderData.summary,
+          image: [loaderData.image],
+          sku: loaderData.slug,
+          category: loaderData.category,
+          brand: { '@type': 'Brand', name: SITENAME },
+          offers: {
+            '@type': 'Offer',
+            url: absoluteUrl(path),
+            priceCurrency: 'INR',
+            price: loaderData.price,
+            availability: loaderData.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+            itemCondition: 'https://schema.org/NewCondition',
+          },
+        },
+        {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: absoluteUrl('/') },
+            { '@type': 'ListItem', position: 2, name: 'Shop', item: absoluteUrl('/products') },
+            { '@type': 'ListItem', position: 3, name: loaderData.name, item: absoluteUrl(path) },
+          ],
+        },
+      ],
+    });
+  },
   component: ProductDetailPage,
 });
 

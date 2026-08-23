@@ -4,7 +4,7 @@ import Page from '@/app/components/page';
 import ProductCard from '@/app/components/product-card';
 import Image from '@/app/components/image';
 import { useShop } from '@/app/components/shop-provider';
-import { siteTitle } from '@/app/constants';
+import { SITENAME, absoluteUrl, fallbackImage, pageHead, siteDescription } from '@/app/constants';
 import { getCategoryStatsFn, getProductsFn } from '@/app/shop-api';
 
 export const Route = createFileRoute('/')({
@@ -22,10 +22,30 @@ export const Route = createFileRoute('/')({
       categoryStats,
     };
   },
-  head: () => ({
-    meta: [
-      { title: siteTitle() },
-      { name: 'description', content: 'Objects for slow mornings and long evenings. Browse curated goods from Seoul and Osaka.' },
+  head: () => pageHead({
+    description: siteDescription,
+    path: '/',
+    image: fallbackImage.startsWith('http') ? fallbackImage : undefined,
+    jsonLd: [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'OnlineStore',
+        name: SITENAME,
+        url: absoluteUrl('/'),
+        description: siteDescription,
+        ...(fallbackImage.startsWith('http') ? { image: fallbackImage } : {}),
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: SITENAME,
+        url: absoluteUrl('/'),
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: `${absoluteUrl('/products')}?q={search_term_string}`,
+          'query-input': 'required name=search_term_string',
+        },
+      },
     ],
   }),
   component: HomePage,

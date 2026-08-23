@@ -4,15 +4,15 @@ import Button from '@/app/components/button';
 import EmptyState from '@/app/components/empty-state';
 import Page from '@/app/components/page';
 import { useShop } from '@/app/components/shop-provider';
-import { siteTitle } from '@/app/constants';
+import { pageHead } from '@/app/constants';
 import { getCartFn, getOrdersFn } from '@/app/shop-api';
 
 export const Route = createFileRoute('/orders')({
-  head: () => ({
-    meta: [
-      { title: siteTitle('Orders') },
-      { name: 'description', content: 'View your cart and order history on Start.' },
-    ],
+  head: () => pageHead({
+    title: 'Orders',
+    description: 'View your Start cart and order history with live delivery updates.',
+    path: '/orders',
+    noindex: true,
   }),
   component: OrdersPage,
 });

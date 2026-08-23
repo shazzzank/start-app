@@ -4,15 +4,15 @@ import Button from '@/app/components/button';
 import EmptyState from '@/app/components/empty-state';
 import Page from '@/app/components/page';
 import { useShop } from '@/app/components/shop-provider';
-import { siteTitle } from '@/app/constants';
+import { pageHead } from '@/app/constants';
 import { getWishlistFn } from '@/app/shop-api';
 
 export const Route = createFileRoute('/wishlist')({
-  head: () => ({
-    meta: [
-      { title: siteTitle('Wishlist') },
-      { name: 'description', content: 'Saved pieces on your Start wishlist.' },
-    ],
+  head: () => pageHead({
+    title: 'Wishlist',
+    description: 'Saved pieces on your Start wishlist.',
+    path: '/wishlist',
+    noindex: true,
   }),
   component: WishlistPage,
 });

@@ -4,7 +4,7 @@ import Button from '@/app/components/button';
 import Image from '@/app/components/image';
 import Page from '@/app/components/page';
 import { useShop } from '@/app/components/shop-provider';
-import { productImageMaxBytes, productImageMimeTypes, siteTitle } from '@/app/constants';
+import { productImageMaxBytes, productImageMimeTypes, pageHead } from '@/app/constants';
 import { fileToBase64 } from '@/app/helper';
 import type { ProductImageMime } from '@/app/types';
 import { getProductFn, removeProductImageFn, updateProductFn, uploadProductImageFn } from '@/app/shop-api';
@@ -15,11 +15,11 @@ export const Route = createFileRoute('/admin/products/$slug/edit')({
     if (!product) throw notFound();
     return product;
   },
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: siteTitle(loaderData ? `Edit ${loaderData.name}` : 'Edit product') },
-      { name: 'description', content: 'Edit product details in the Start admin dashboard.' },
-    ],
+  head: ({ loaderData }) => pageHead({
+    title: loaderData ? `Edit ${loaderData.name}` : 'Edit product',
+    description: 'Edit product details in the Start admin dashboard.',
+    path: loaderData ? `/admin/products/${loaderData.slug}/edit` : '/admin',
+    noindex: true,
   }),
   component: EditProductPage,
 });

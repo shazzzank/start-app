@@ -1,5 +1,5 @@
 ---
-description: Every route needs SEO titles; Firebase page views and button clicks stay wired
+description: SEO titles/descriptions, ecommerce meta, Firebase analytics
 alwaysApply: true
 ---
 
@@ -7,7 +7,14 @@ alwaysApply: true
 
 When adding or editing routes/pages in this app:
 
-1. **Every route** must define `head.meta` with `{ title: siteTitle('…') }` (and a short `description`). Import `siteTitle` from `@/app/constants`. Dynamic pages use `loaderData` in `head`.
-2. **Do not remove** `AnalyticsTracker` from `src/routes/__root.tsx` — it fires `page_view` on navigation and `button_click` for `button` / `a.btn`.
-3. Interactive CTAs should use `@/app/components/button` (class `btn`) or a native `<button>` so clicks are tracked. Do not invent a parallel analytics path.
-4. Firebase web config lives in `VITE_FIREBASE_*` (local `.env` + Vercel). Keep `app/firebase.ts` and `vite.config.ts` `define` in sync when keys change.
+1. **Every route** must use `pageHead({ … })` from `@/app/constants` (or keep root defaults). Do not hand-roll only `{ title, description }` — `pageHead` sets title, meta description (≤160 chars), Open Graph, Twitter card, and canonical URL.
+2. **Title rules:** `siteTitle('Page')` → `Page · Start` (home is just `Start`). Keep under ~60 characters; product names are truncated inside `siteTitle`. Titles must be unique per indexable URL and lead with the page topic, not only the brand.
+3. **Description rules:** one unique sentence (~120–160 chars) that states what the page offers (category, product, or shop benefit). No duplicate boilerplate across routes. Prefer benefit + category/product keywords over filler.
+4. **Public vs private:** indexable pages = `/`, `/products`, `/products/$slug`. Account, cart/orders, wishlist, alerts, login, and admin must pass `noindex: true`. Search-result shop URLs (`?q=`) also use `noindex`.
+5. **Product pages:** pass `image`, `ogType: 'product'`, and JSON-LD `Product` + `BreadcrumbList` (via `pageHead` `jsonLd`). Keep `<h1>` as the product name and meaningful image `alt`.
+6. **Home:** keep `OnlineStore` + `WebSite` (with `SearchAction`) JSON-LD. Do not duplicate store schema on every page.
+7. **Crawl aids:** keep `/robots.txt` and `/sitemap.xml` routes in sync when public paths change. Set `SITE_URL` in production when the public origin differs from the Vercel hostname.
+8. **Do not remove** `AnalyticsTracker` from `src/routes/__root.tsx` — it fires `page_view` on navigation and `button_click` for `button` / `a.btn`.
+9. Interactive CTAs should use `@/app/components/button` (class `btn`) or a native `<button>` so clicks are tracked. Do not invent a parallel analytics path.
+10. Firebase web config lives in `VITE_FIREBASE_*` (local `.env` + Vercel) and is read only from `app/firebase.ts`. Vite exposes `VITE_*` automatically — do **not** re-inject Firebase keys in `vite.config.ts` `define`.
+11. **Dead code with the same feature:** when you add or change code for a feature (analytics, SEO, env wiring, etc.), remove every related leftover that the new path makes unused — old helpers, duplicate config, unused imports, stale docs/rule lines, and parallel wiring. Do not leave two ways to do the same thing.

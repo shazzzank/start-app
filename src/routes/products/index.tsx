@@ -3,7 +3,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import Page from '@/app/components/page';
 import ProductCard from '@/app/components/product-card';
-import { productsPageSize, siteTitle } from '@/app/constants';
+import { productsPageSize, pageHead } from '@/app/constants';
 import type { ProductSearch } from '@/app/types';
 import { getCategoriesFn, getProductsFn } from '@/app/shop-api';
 
@@ -34,12 +34,19 @@ export const Route = createFileRoute('/products/')({
     ]);
     return { categories, initialPage, query };
   },
-  head: () => ({
-    meta: [
-      { title: siteTitle('Shop') },
-      { name: 'description', content: 'Browse the Start catalogue — stationery, home, bags, and wear.' },
-    ],
-  }),
+  head: ({ loaderData }) => {
+    const category = loaderData?.query?.category;
+    const q = loaderData?.query?.q;
+    const hasCategory = !!category;
+    return pageHead({
+      title: hasCategory ? category : 'Shop',
+      description: hasCategory
+        ? `Shop ${category} at Start — small-batch pieces with live stock, fair prices, and tracked delivery.`
+        : 'Browse Start’s catalogue of stationery, home, bags, and wear. Filter by category and price for everyday essentials.',
+      path: hasCategory ? `/products?category=${encodeURIComponent(category)}` : '/products',
+      noindex: !!q,
+    });
+  },
   component: ProductsPage,
 });
 
