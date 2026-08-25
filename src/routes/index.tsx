@@ -51,11 +51,11 @@ function HomePage() {
           <p className='lead'>Objects for slow mornings and long evenings.</p>
           <p className='desc'>Browse curated goods, save favourites, and track orders from your account.</p>
           <div className='actions'>
-            <Button to='/products'>Shop collection</Button>
+            <Button to='/products' analytics='shop_collection'>Shop collection</Button>
             {user ? (
-              <Button variant='outline' to='/account'>Hi, {user.name.split(' ')[0]}</Button>
+              <Button variant='outline' to='/account' analytics='account'>Hi, {user.name.split(' ')[0]}</Button>
             ) : (
-              <Button variant='outline' to='/login'>Sign in</Button>
+              <Button variant='outline' to='/login' analytics='sign_in'>Sign in</Button>
             )}
           </div>
           <span className='rule' aria-hidden='true' />
@@ -69,7 +69,7 @@ function HomePage() {
           <div className='grid'>
             {featured.map((product) => <ProductCard key={product.slug} product={product} />)}
           </div>
-          <div className='mt-10'><Button variant='outline' to='/products'>View all products</Button></div>
+          <div className='mt-10'><Button variant='outline' to='/products' analytics='view_all_products'>View all products</Button></div>
         </div>
       </section>
       <section className='section'>
@@ -135,8 +135,8 @@ function HomePage() {
           <h2 className='h2'>From our makers</h2>
           <p className='desc'>Start works with small studios across Seoul and Osaka. Every product ships from our shared warehouse with order tracking and stock updates — all stored in Postgres, never in your browser.</p>
           <div className='btns'>
-            <Button to='/products'>Browse the shop</Button>
-            {!user && <Button variant='outline' to='/login'>Create an account</Button>}
+            <Button to='/products' analytics='browse_shop'>Browse the shop</Button>
+            {!user && <Button variant='outline' to='/login' analytics='create_account'>Create an account</Button>}
           </div>
         </div>
       </section>

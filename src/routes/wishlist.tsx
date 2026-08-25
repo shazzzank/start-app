@@ -39,8 +39,8 @@ function WishlistPage() {
                       <p className='text text-sm'>{price(product.price)}</p>
                     </div>
                     <div className='btns !mt-0'>
-                      <Button variant='outline' onClick={() => toggleWishlist(product.slug)} aria-label={`Remove ${product.name} from wishlist`}>Remove</Button>
-                      <Button onClick={() => addToCart(product.slug)} aria-label={`Add ${product.name} to cart`}>Add to cart</Button>
+                      <Button variant='outline' onClick={() => toggleWishlist(product.slug)} analytics='remove_wishlist' aria-label={`Remove ${product.name} from wishlist`}>Remove</Button>
+                      <Button onClick={() => addToCart(product.slug)} analytics='add_to_cart' aria-label={`Add ${product.name} to cart`}>Add to cart</Button>
                     </div>
                   </li>
                 ))}

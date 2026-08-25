@@ -42,12 +42,12 @@ function OrdersPage() {
                           <p className='h4'>{product.name}</p>
                           <p className='text text-sm'>Qty {qty} · {price(product.price * qty)}</p>
                         </div>
-                        <Button variant='outline' size='sm' onClick={() => removeFromCart(product.slug)}>Remove</Button>
+                        <Button variant='outline' size='sm' onClick={() => removeFromCart(product.slug)} analytics='remove_from_cart'>Remove</Button>
                       </div>
                     ))}
                     <div className='mt-6 flex items-center justify-between gap-4'>
                       <p className='price text-xl'>{price(cartTotal)}</p>
-                      <Button onClick={() => placeOrder()}>Place order</Button>
+                      <Button onClick={() => placeOrder()} analytics='place_order'>Place order</Button>
                     </div>
                   </>
                 ) : (

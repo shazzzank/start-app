@@ -25,6 +25,7 @@ export default function ProductCard({ product }: { product: Product }) {
                 variant='outline'
                 size='sm'
                 onClick={() => toggleWishlist(product.slug)}
+                analytics={saved ? 'remove_wishlist' : 'save_wishlist'}
                 aria-label={saved ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}
                 aria-pressed={saved}
               >
@@ -32,9 +33,9 @@ export default function ProductCard({ product }: { product: Product }) {
               </Button>
             )}
             {user ? (
-              <Button size='sm' onClick={() => addToCart(product.slug)} aria-label={`Add ${product.name} to cart`}>Add</Button>
+              <Button size='sm' onClick={() => addToCart(product.slug)} analytics='add_to_cart' aria-label={`Add ${product.name} to cart`}>Add</Button>
             ) : (
-              <Button size='sm' to='/login'>Sign in</Button>
+              <Button size='sm' to='/login' analytics='sign_in'>Sign in</Button>
             )}
           </div>
         </div>

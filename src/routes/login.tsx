@@ -113,7 +113,7 @@ function LoginPage() {
                 />
               </div>
               {error && <p id='auth-error' className='text-red text-sm' role='alert'>{error}</p>}
-              <Button type='submit'>{mode === 'login' ? 'Sign in' : 'Create account'}</Button>
+              <Button type='submit' analytics={mode === 'login' ? 'sign_in' : 'create_account'}>{mode === 'login' ? 'Sign in' : 'Create account'}</Button>
             </form>
           </div>
         </div>

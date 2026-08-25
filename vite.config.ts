@@ -16,17 +16,19 @@ function envValue(env: Record<string, string>, ...keys: string[]) {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const cloudinaryCloudName = envValue(env, 'CLOUDINARY_CLOUD_NAME', 'VITE_CLOUDINARY_CLOUD_NAME');
+  const appEnv = envValue(env, 'APP_ENV') || (mode === 'production' ? 'production' : 'local');
   return {
-  server: {
-    port: Number(process.env.PORT ?? env.PORT ?? 3000),
-  },
-  resolve: {
-    alias: { '@': path.resolve(__dirname, './') },
-    tsconfigPaths: true,
-  },
-  define: {
-    'import.meta.env.VITE_CLOUDINARY_CLOUD_NAME': JSON.stringify(cloudinaryCloudName),
-  },
+    server: {
+      port: Number(process.env.PORT ?? env.PORT ?? 3000),
+    },
+    resolve: {
+      alias: { '@': path.resolve(__dirname, './') },
+      tsconfigPaths: true,
+    },
+    define: {
+      'import.meta.env.VITE_CLOUDINARY_CLOUD_NAME': JSON.stringify(cloudinaryCloudName),
+      'import.meta.env.VITE_APP_ENV': JSON.stringify(appEnv),
+    },
   oxc: {
     jsx: {
       runtime: 'automatic',

@@ -56,13 +56,13 @@ function ProductDetailPage() {
               <div className='btns'>
                 {user ? (
                   <>
-                    <Button onClick={() => addToCart(product.slug)}>Add to cart</Button>
-                    <Button variant='outline' onClick={() => toggleWishlist(product.slug)} aria-pressed={saved} aria-label={saved ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}>
+                    <Button onClick={() => addToCart(product.slug)} analytics='add_to_cart'>Add to cart</Button>
+                    <Button variant='outline' onClick={() => toggleWishlist(product.slug)} analytics={saved ? 'remove_wishlist' : 'save_wishlist'} aria-pressed={saved} aria-label={saved ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}>
                       {saved ? 'Saved to wishlist' : 'Save to wishlist'}
                     </Button>
                   </>
                 ) : (
-                  <Button to='/login'>Sign in to buy</Button>
+                  <Button to='/login' analytics='sign_in'>Sign in to buy</Button>
                 )}
               </div>
             </div>

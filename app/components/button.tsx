@@ -14,6 +14,7 @@ type Shared = {
   variant?: Variant;
   size?: Size;
   className?: string;
+  analytics?: string;
   children: ReactNode;
 };
 
@@ -25,16 +26,18 @@ export default function Button({
   variant = 'primary',
   size = 'md',
   className = '',
+  analytics,
   children,
   ...props
 }: Props) {
   const classes = ['btn', styles[variant], size === 'sm' ? 'btn-sm' : 'btn-md', className].filter(Boolean).join(' ');
+  const track = analytics ? { 'data-analytics': analytics } : {};
 
   if ('to' in props && props.to) {
     const { to, ...rest } = props;
-    return <Link to={to} className={classes} {...rest}>{children}</Link>;
+    return <Link to={to} className={classes} {...track} {...rest}>{children}</Link>;
   }
 
   const { type = 'button', ...rest } = props as ComponentProps<'button'>;
-  return <button type={type} className={classes} {...rest}>{children}</button>;
+  return <button type={type} className={classes} {...track} {...rest}>{children}</button>;
 }
