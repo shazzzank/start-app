@@ -2,30 +2,27 @@ import { z } from 'zod';
 import { createServerFn } from '@tanstack/react-start';
 import { getRequestIP } from '@tanstack/react-start/server';
 import { eq } from 'drizzle-orm';
-import { resolveShopLocale } from '@/app/lib/locale';
+import { resolveLocale } from '@/app/lib/locale';
 import {
-  adminEmailFromEnv, clearSessionCookie, getSessionUser, hashPassword, isStrongPassword,
+  adminEmail, clearSessionCookie, getSessionUser, hashPassword, isStrongPassword,
   rateLimit, readSessionId, sessionExpiry, setSessionCookie, verifyPassword,
 } from '@/app/server/auth';
 import { ensureCloudinaryAssets, getAssetUrls } from '@/app/server/cloudinary';
 import { db } from '@/app/server/db';
 import { notify } from '@/app/server/notify';
-import { sessions, shopUsers } from '@/app/server/schema';
+import { sessions, users } from '@/app/server/schema';
 import { ensureSeed } from '@/app/server/seed';
 
 export const getSessionFn = createServerFn({ method: 'GET' }).handler(async () => {
   await ensureSeed();
   await ensureCloudinaryAssets();
-  const user = await getSessionUser();
-  return { user };
+  const [user, locale, assets] = await Promise.all([
+    getSessionUser(),
+    resolveLocale(),
+    getAssetUrls(),
+  ]);
+  return { user, locale, assets };
 });
-
-export const getAssetUrlsFn = createServerFn({ method: 'GET' }).handler(async () => {
-  await ensureCloudinaryAssets();
-  return getAssetUrls();
-});
-
-export const getLocaleFn = createServerFn({ method: 'GET' }).handler(async () => resolveShopLocale());
 
 export const loginFn = createServerFn({ method: 'POST' })
   .validator(z.object({ email: z.string().email().max(255), password: z.string().min(1).max(128) }))
@@ -33,11 +30,11 @@ export const loginFn = createServerFn({ method: 'POST' })
     await ensureSeed();
     const email = data.email.trim().toLowerCase();
     if (await rateLimit(`login:${email}`, 5, 900)) {
-      const [user] = await db.select().from(shopUsers).where(eq(shopUsers.email, email)).limit(1);
-      if (user && verifyPassword(data.password, user.password_hash)) {
-        await db.delete(sessions).where(eq(sessions.user_id, user.id));
+      const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+      if (user && verifyPassword(data.password, user.password)) {
+        await db.delete(sessions).where(eq(sessions.userId, user.id));
         const token = crypto.randomUUID();
-        await db.insert(sessions).values({ id: token, user_id: user.id, expires_at: sessionExpiry() });
+        await db.insert(sessions).values({ id: token, userId: user.id, expiresAt: sessionExpiry() });
         setSessionCookie(token);
         return {
           ok: true as const,
@@ -61,20 +58,20 @@ export const registerFn = createServerFn({ method: 'POST' })
       const ip = getRequestIP({ xForwardedFor: true }) ?? 'unknown';
       if (await rateLimit(`register:${ip}`, 10, 3600)) {
         const email = data.email.trim().toLowerCase();
-        const adminEmail = adminEmailFromEnv();
-        if (email !== adminEmail) {
-          const [exists] = await db.select({ id: shopUsers.id }).from(shopUsers).where(eq(shopUsers.email, email)).limit(1);
+        const emailAdmin = adminEmail();
+        if (email !== emailAdmin) {
+          const [exists] = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
           if (!exists) {
             const id = crypto.randomUUID();
-            await db.insert(shopUsers).values({
+            await db.insert(users).values({
               id,
               name: data.name.trim(),
               email,
-              password_hash: hashPassword(data.password),
+              password: hashPassword(data.password),
               role: 'customer',
             });
             const token = crypto.randomUUID();
-            await db.insert(sessions).values({ id: token, user_id: id, expires_at: sessionExpiry() });
+            await db.insert(sessions).values({ id: token, userId: id, expiresAt: sessionExpiry() });
             setSessionCookie(token);
             await notify(id, 'Welcome to Start', 'Your account is ready. Browse the shop and place your first order.');
             return { ok: true as const, user: { id, name: data.name.trim(), email, role: 'customer' as const } };

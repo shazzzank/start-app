@@ -2,12 +2,11 @@ import path from 'path';
 import winston from 'winston';
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { DATABASE_URL } from '@/app/constants';
+import { databaseUrl } from '@/app/constants';
 
-
-const isLocalDb = /localhost|127\.0\.0\.1/.test(DATABASE_URL);
+const isLocalDb = /localhost|127\.0\.0\.1/.test(databaseUrl);
 const pool = new Pool({
-  connectionString: DATABASE_URL,
+  connectionString: databaseUrl,
   max: 20,
   idleTimeoutMillis: 30_000,
   ...(isLocalDb ? {} : { ssl: { rejectUnauthorized: false } }),

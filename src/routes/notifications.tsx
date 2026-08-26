@@ -4,7 +4,7 @@ import Page from '@/app/components/page';
 import { useShop } from '@/app/components/shop-provider';
 import { pageHead } from '@/app/constants';
 import { useNotificationsQuery } from '@/app/queries';
-import { markNotificationReadFn } from '@/app/api';
+import { markNotificationReadFn } from '@/app/api/notifications';
 
 export const Route = createFileRoute('/notifications')({
   head: () => pageHead({

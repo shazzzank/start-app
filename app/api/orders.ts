@@ -1,36 +1,34 @@
 import { z } from 'zod';
 import { createServerFn } from '@tanstack/react-start';
 import { desc, eq, inArray } from 'drizzle-orm';
-import { formatPrice, resolveShopLocale } from '@/app/lib/locale';
+import { formatPrice, resolveLocale } from '@/app/lib/locale';
 import { requireUser } from '@/app/server/auth';
 import { db } from '@/app/server/db';
 import { notify, notifyAdmins } from '@/app/server/notify';
-import { cartItems, orderItems, orders, products, shopUsers } from '@/app/server/schema';
+import { cart, orders, products, users } from '@/app/server/schema';
 
 export const placeOrderFn = createServerFn({ method: 'POST' }).handler(async () => {
   const user = await requireUser(['customer']);
   if (user) {
-    const cart = await db.select({ qty: cartItems.qty, product: products }).from(cartItems)
-      .innerJoin(products, eq(cartItems.product_id, products.id))
-      .where(eq(cartItems.user_id, user.id));
-    if (cart.length) {
-      const orderId = crypto.randomUUID().slice(0, 8).toUpperCase();
-      const total = cart.reduce((sum, row) => sum + row.product.price * row.qty, 0);
-      await db.insert(orders).values({ id: orderId, user_id: user.id, total, status: 'pending' });
-      await db.insert(orderItems).values(cart.map((row) => ({
-        id: crypto.randomUUID(),
-        order_id: orderId,
-        product_id: row.product.id,
+    const rows = await db.select({ qty: cart.qty, product: products }).from(cart)
+      .innerJoin(products, eq(cart.productId, products.id))
+      .where(eq(cart.userId, user.id));
+    if (rows.length) {
+      const id = crypto.randomUUID().slice(0, 8).toUpperCase();
+      const items = rows.map((row) => ({
+        slug: row.product.slug,
         name: row.product.name,
         price: row.product.price,
         qty: row.qty,
-      })));
-      await db.delete(cartItems).where(eq(cartItems.user_id, user.id));
-      const locale = await resolveShopLocale();
+      }));
+      const total = items.reduce((sum, item) => sum + item.price * item.qty, 0);
+      await db.insert(orders).values({ id, userId: user.id, items, total, status: 'pending' });
+      await db.delete(cart).where(eq(cart.userId, user.id));
+      const locale = await resolveLocale();
       const totalLabel = formatPrice(total, locale.currency);
-      await notify(user.id, `Order ${orderId} placed`, `Your order total is ${totalLabel}. We will notify you when it ships.`);
-      await notifyAdmins(`New order ${orderId}`, `${user.name} placed an order worth ${totalLabel}.`);
-      return { ok: true as const, orderId };
+      await notify(user.id, `Order ${id} placed`, `Your order total is ${totalLabel}. We will notify you when it ships.`);
+      await notifyAdmins(`New order ${id}`, `${user.name} placed an order worth ${totalLabel}.`);
+      return { ok: true as const, orderId: id };
     }
   }
   return { ok: false as const };
@@ -40,39 +38,23 @@ export const getOrdersFn = createServerFn({ method: 'GET' }).handler(async () =>
   const user = await requireUser();
   if (user) {
     const rows = user.role === 'admin'
-      ? await db.select().from(orders).orderBy(desc(orders.created_at))
-      : await db.select().from(orders).where(eq(orders.user_id, user.id)).orderBy(desc(orders.created_at));
-    if (rows.length) {
-      const orderIds = rows.map((order) => order.id);
-      const allItems = await db.select().from(orderItems).where(inArray(orderItems.order_id, orderIds));
-      const itemsByOrder = new Map<string, typeof allItems>();
-      for (const item of allItems) {
-        const list = itemsByOrder.get(item.order_id) ?? [];
-        list.push(item);
-        itemsByOrder.set(item.order_id, list);
-      }
-      const ownerMap = new Map<string, { name: string; email: string }>();
-      if (user.role === 'admin') {
-        const userIds = [...new Set(rows.map((order) => order.user_id))];
-        const owners = await db.select({ id: shopUsers.id, name: shopUsers.name, email: shopUsers.email })
-          .from(shopUsers).where(inArray(shopUsers.id, userIds));
-        for (const owner of owners) ownerMap.set(owner.id, { name: owner.name, email: owner.email });
-      }
-      return rows.map((order) => {
-        const items = itemsByOrder.get(order.id) ?? [];
-        const owner = user.role === 'admin'
-          ? ownerMap.get(order.user_id)
-          : { name: user.name, email: user.email };
-        return {
-          id: order.id,
-          total: order.total,
-          status: order.status,
-          createdAt: order.created_at?.toISOString() ?? '',
-          customer: owner?.name ?? '',
-          items: items.map((item) => ({ slug: item.product_id, name: item.name, price: item.price, qty: item.qty })),
-        };
-      });
+      ? await db.select().from(orders).orderBy(desc(orders.createdAt))
+      : await db.select().from(orders).where(eq(orders.userId, user.id)).orderBy(desc(orders.createdAt));
+    if (!rows.length) return [];
+    const names = new Map<string, string>();
+    if (user.role === 'admin') {
+      const ids = [...new Set(rows.map((row) => row.userId))];
+      const owners = await db.select({ id: users.id, name: users.name }).from(users).where(inArray(users.id, ids));
+      for (const owner of owners) names.set(owner.id, owner.name);
     }
+    return rows.map((row) => ({
+      id: row.id,
+      total: row.total,
+      status: row.status,
+      createdAt: row.createdAt?.toISOString() ?? '',
+      customer: user.role === 'admin' ? (names.get(row.userId) ?? '') : user.name,
+      items: row.items,
+    }));
   }
   return [];
 });
@@ -85,7 +67,7 @@ export const updateOrderStatusFn = createServerFn({ method: 'POST' })
       const [order] = await db.select().from(orders).where(eq(orders.id, data.orderId)).limit(1);
       if (order) {
         await db.update(orders).set({ status: data.status }).where(eq(orders.id, data.orderId));
-        await notify(order.user_id, `Order ${order.id} ${data.status}`, `Your order status is now ${data.status}.`);
+        await notify(order.userId, `Order ${order.id} ${data.status}`, `Your order status is now ${data.status}.`);
         return { ok: true as const };
       }
     }

@@ -5,45 +5,37 @@ import tailwindcss from '@tailwindcss/vite';
 import viteReact from '@vitejs/plugin-react';
 import { nitro } from 'nitro/vite';
 
-function envValue(env: Record<string, string>, ...keys: string[]) {
-  for (const key of keys) {
-    const value = process.env[key] ?? env[key];
-    if (value) return value;
-  }
-  return '';
-}
-
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '');
-  const cloudinaryCloudName = envValue(env, 'CLOUDINARY_CLOUD_NAME', 'VITE_CLOUDINARY_CLOUD_NAME');
-  const appEnv = envValue(env, 'APP_ENV') || (mode === 'production' ? 'production' : 'local');
+  const fileEnv = loadEnv(mode, process.cwd(), '');
+  const appEnv = process.env.APP_ENV
+    || fileEnv.APP_ENV
+    || (mode === 'production' || process.env.NODE_ENV === 'production' ? 'production' : 'local');
   return {
     server: {
-      port: Number(process.env.PORT ?? env.PORT ?? 3000),
+      port: Number(process.env.PORT || fileEnv.PORT || 3000),
     },
     resolve: {
       alias: { '@': path.resolve(__dirname, './') },
       tsconfigPaths: true,
     },
     define: {
-      'import.meta.env.VITE_CLOUDINARY_CLOUD_NAME': JSON.stringify(cloudinaryCloudName),
       'import.meta.env.VITE_APP_ENV': JSON.stringify(appEnv),
     },
-  oxc: {
-    jsx: {
-      runtime: 'automatic',
-      development: mode !== 'production',
+    oxc: {
+      jsx: {
+        runtime: 'automatic',
+        development: mode !== 'production',
+      },
     },
-  },
-  esbuild: {
-    jsx: 'automatic',
-    jsxDev: mode !== 'production',
-  },
-  plugins: [
-    tailwindcss(),
-    tanstackStart(),
-    nitro({ vercel: { entryFormat: 'node' } }),
-    viteReact({ jsxRuntime: 'automatic' }),
-  ],
-};
+    esbuild: {
+      jsx: 'automatic',
+      jsxDev: mode !== 'production',
+    },
+    plugins: [
+      tailwindcss(),
+      tanstackStart(),
+      nitro({ vercel: { entryFormat: 'node' } }),
+      viteReact({ jsxRuntime: 'automatic' }),
+    ],
+  };
 });

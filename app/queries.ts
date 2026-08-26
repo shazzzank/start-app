@@ -1,14 +1,16 @@
 import { useInfiniteQuery, useQuery, type QueryClient } from '@tanstack/react-query';
 import { productsPageSize } from '@/app/constants';
 import type { ProductListResult, ProductSearch } from '@/app/types';
-import {
-  getAdminProductsFn, getAdminStatsFn, getAdminUsersFn, getCartFn, getLocaleFn,
-  getNotificationsFn, getOrdersFn, getProductsFn, getSessionFn, getSuggestedFn, getWishlistFn,
-} from '@/app/api';
+import { getAdminProductsFn, getAdminStatsFn, getAdminUsersFn } from '@/app/api/admin';
+import { getSessionFn } from '@/app/api/auth';
+import { getCartFn } from '@/app/api/cart';
+import { getNotificationsFn } from '@/app/api/notifications';
+import { getOrdersFn } from '@/app/api/orders';
+import { getProductsFn, getSuggestedFn } from '@/app/api/products';
+import { getWishlistFn } from '@/app/api/wishlist';
 
 export const queryKeys = {
   session: ['session'] as const,
-  locale: ['locale'] as const,
   cart: ['cart'] as const,
   wishlist: ['wishlist'] as const,
   orders: ['orders'] as const,
@@ -32,16 +34,6 @@ export function toProductQuery(search: ProductSearch) {
 
 export function useSessionQuery() {
   return useQuery({ queryKey: queryKeys.session, queryFn: () => getSessionFn() });
-}
-
-export function useLocaleQuery() {
-  return useQuery({
-    queryKey: queryKeys.locale,
-    queryFn: () => getLocaleFn(),
-    staleTime: Infinity,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-  });
 }
 
 export function useCartQuery(enabled: boolean) {
@@ -98,9 +90,8 @@ export function useProductsInfiniteQuery(
   });
 }
 
-export async function invalidateShopQueries(client: QueryClient) {
+export async function refreshQueries(client: QueryClient) {
   await Promise.all([
-    client.invalidateQueries({ queryKey: queryKeys.session }),
     client.invalidateQueries({ queryKey: queryKeys.cart }),
     client.invalidateQueries({ queryKey: queryKeys.wishlist }),
     client.invalidateQueries({ queryKey: queryKeys.orders }),
@@ -122,7 +113,7 @@ export async function refetchAdminQueries(client: QueryClient) {
   ]);
 }
 
-export function clearShopperQueries(client: QueryClient) {
+export function clearUserQueries(client: QueryClient) {
   client.removeQueries({ queryKey: queryKeys.cart });
   client.removeQueries({ queryKey: queryKeys.wishlist });
   client.removeQueries({ queryKey: queryKeys.orders });

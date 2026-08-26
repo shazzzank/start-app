@@ -9,14 +9,14 @@ export const getNotificationsFn = createServerFn({ method: 'GET' }).handler(asyn
   const user = await requireUser();
   if (user) {
     const rows = await db.select().from(notifications)
-      .where(eq(notifications.user_id, user.id))
-      .orderBy(desc(notifications.created_at));
+      .where(eq(notifications.userId, user.id))
+      .orderBy(desc(notifications.createdAt));
     return rows.map((row) => ({
       id: row.id,
       title: row.title,
       body: row.body,
       read: row.read,
-      createdAt: row.created_at?.toISOString() ?? '',
+      createdAt: row.createdAt?.toISOString() ?? '',
     }));
   }
   return [];
@@ -28,7 +28,7 @@ export const markNotificationReadFn = createServerFn({ method: 'POST' })
     const user = await requireUser();
     if (user) {
       await db.update(notifications).set({ read: true })
-        .where(and(eq(notifications.id, data.id), eq(notifications.user_id, user.id)));
+        .where(and(eq(notifications.id, data.id), eq(notifications.userId, user.id)));
       return { ok: true as const };
     }
     return { ok: false as const };

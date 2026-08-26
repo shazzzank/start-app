@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams, useRouterState } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
-import { SITENAME } from '@/app/constants';
+import { siteName } from '@/app/constants';
 import { useShop } from '@/app/components/shop-provider';
 
 const shopLink = { to: '/products', label: 'Shop' } as const;
@@ -72,7 +72,7 @@ export default function Nav() {
 
   return (
     <nav className='nav' aria-label='Main'>
-      <Link to='/' className='logo' aria-label={`${SITENAME} home`}>{SITENAME}<span aria-hidden='true'>.</span></Link>
+      <Link to='/' className='logo' aria-label={`${siteName} home`}>{siteName}<span aria-hidden='true'>.</span></Link>
       {!!crumbs.length && (
         <nav className='nav-crumb' aria-label='Breadcrumb'>
           <ol className='crumb-list'>

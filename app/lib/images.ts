@@ -1,23 +1,19 @@
-import { cloudinaryCloudName } from '@/app/constants';
-
-function activeCloudName() {
-  return process.env.CLOUDINARY_CLOUD_NAME ?? cloudinaryCloudName;
+function cloudName() {
+  return process.env.CLOUDINARY_CLOUD_NAME ?? '';
 }
 
 export function resolveProductImageUrl(src: string) {
-  if (src.startsWith('/products/')) {
-    const cloudName = activeCloudName();
-    if (cloudName) {
-      const publicId = `start${src.replace(/\.[^.]+$/, '')}`;
-      return `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto/${publicId}`;
-    }
+  const name = cloudName();
+  if (src.startsWith('/products/') && name) {
+    const publicId = `start${src.replace(/\.[^.]+$/, '')}`;
+    return `https://res.cloudinary.com/${name}/image/upload/f_auto,q_auto/${publicId}`;
   }
   return src;
 }
 
 export function isCloudinaryImageUrl(value: string) {
-  const cloudName = activeCloudName();
-  return !!cloudName && value.startsWith(`https://res.cloudinary.com/${cloudName}/`);
+  const name = cloudName();
+  return !!name && value.startsWith(`https://res.cloudinary.com/${name}/`);
 }
 
 export function optimizeImageUrl(src: string, width = 900) {

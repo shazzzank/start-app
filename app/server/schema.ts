@@ -1,27 +1,26 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, varchar, integer, text, boolean, timestamp, unique, index } from 'drizzle-orm/pg-core';
-import { TABLE_PREFIX } from '@/app/constants';
+import { boolean, index, integer, jsonb, pgTable, text, timestamp, unique, varchar } from 'drizzle-orm/pg-core';
+import { tablePrefix } from '@/app/constants';
 
-const p = TABLE_PREFIX;
+const p = tablePrefix;
 
-export const shopUsers = pgTable(`${p}shop_users`, {
+type OrderLine = { slug: string; name: string; price: number; qty: number };
+
+export const users = pgTable(`${p}users`, {
   id: varchar('id', { length: 64 }).primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }).notNull().unique(),
-  password_hash: varchar('password_hash', { length: 255 }).notNull(),
+  password: varchar('password', { length: 255 }).notNull(),
   role: varchar('role', { enum: ['customer', 'admin'] }).notNull(),
-  created_at: timestamp('created_at', { withTimezone: true }).default(sql`now()`).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`).notNull(),
 });
 
 export const sessions = pgTable(`${p}sessions`, {
   id: varchar('id', { length: 64 }).primaryKey(),
-  user_id: varchar('user_id', { length: 64 }).notNull().references(() => shopUsers.id, { onDelete: 'cascade' }),
-  expires_at: timestamp('expires_at', { withTimezone: true }).notNull(),
-  created_at: timestamp('created_at', { withTimezone: true }).default(sql`now()`).notNull(),
-}, (t) => [
-  index('sessions_user_id_idx').on(t.user_id),
-  index('sessions_expires_at_idx').on(t.expires_at),
-]);
+  userId: varchar('user_id', { length: 64 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`).notNull(),
+}, (t) => [index('sessions_user_idx').on(t.userId)]);
 
 export const products = pgTable(`${p}products`, {
   id: varchar('id', { length: 64 }).primaryKey(),
@@ -33,55 +32,40 @@ export const products = pgTable(`${p}products`, {
   price: integer('price').notNull(),
   stock: integer('stock').notNull(),
   image: varchar('image', { length: 512 }).notNull(),
-  created_at: timestamp('created_at', { withTimezone: true }).default(sql`now()`).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`).notNull(),
 }, (t) => [
   index('products_category_idx').on(t.category),
   index('products_price_idx').on(t.price),
   index('products_name_idx').on(t.name),
 ]);
 
-export const cartItems = pgTable(`${p}cart_items`, {
+export const cart = pgTable(`${p}cart`, {
   id: varchar('id', { length: 64 }).primaryKey(),
-  user_id: varchar('user_id', { length: 64 }).notNull().references(() => shopUsers.id, { onDelete: 'cascade' }),
-  product_id: varchar('product_id', { length: 64 }).notNull().references(() => products.id, { onDelete: 'cascade' }),
+  userId: varchar('user_id', { length: 64 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
+  productId: varchar('product_id', { length: 64 }).notNull().references(() => products.id, { onDelete: 'cascade' }),
   qty: integer('qty').notNull().default(1),
-}, (t) => [unique().on(t.user_id, t.product_id), index('cart_items_user_id_idx').on(t.user_id)]);
+}, (t) => [unique().on(t.userId, t.productId), index('cart_user_idx').on(t.userId)]);
 
-export const wishlistItems = pgTable(`${p}wishlist_items`, {
+export const wishlist = pgTable(`${p}wishlist`, {
   id: varchar('id', { length: 64 }).primaryKey(),
-  user_id: varchar('user_id', { length: 64 }).notNull().references(() => shopUsers.id, { onDelete: 'cascade' }),
-  product_id: varchar('product_id', { length: 64 }).notNull().references(() => products.id, { onDelete: 'cascade' }),
-}, (t) => [unique().on(t.user_id, t.product_id), index('wishlist_items_user_id_idx').on(t.user_id)]);
+  userId: varchar('user_id', { length: 64 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
+  productId: varchar('product_id', { length: 64 }).notNull().references(() => products.id, { onDelete: 'cascade' }),
+}, (t) => [unique().on(t.userId, t.productId), index('wishlist_user_idx').on(t.userId)]);
 
 export const orders = pgTable(`${p}orders`, {
   id: varchar('id', { length: 64 }).primaryKey(),
-  user_id: varchar('user_id', { length: 64 }).notNull().references(() => shopUsers.id),
+  userId: varchar('user_id', { length: 64 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
+  items: jsonb('items').$type<OrderLine[]>().notNull(),
   total: integer('total').notNull(),
   status: varchar('status', { enum: ['pending', 'shipped', 'delivered'] }).notNull().default('pending'),
-  created_at: timestamp('created_at', { withTimezone: true }).default(sql`now()`).notNull(),
-}, (t) => [
-  index('orders_user_id_idx').on(t.user_id),
-  index('orders_created_at_idx').on(t.created_at),
-]);
-
-export const orderItems = pgTable(`${p}order_items`, {
-  id: varchar('id', { length: 64 }).primaryKey(),
-  order_id: varchar('order_id', { length: 64 }).notNull().references(() => orders.id, { onDelete: 'cascade' }),
-  product_id: varchar('product_id', { length: 64 }).notNull().references(() => products.id),
-  name: varchar('name', { length: 255 }).notNull(),
-  price: integer('price').notNull(),
-  qty: integer('qty').notNull(),
-}, (t) => [index('order_items_order_id_idx').on(t.order_id)]);
+  createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`).notNull(),
+}, (t) => [index('orders_user_idx').on(t.userId)]);
 
 export const notifications = pgTable(`${p}notifications`, {
   id: varchar('id', { length: 64 }).primaryKey(),
-  user_id: varchar('user_id', { length: 64 }).notNull().references(() => shopUsers.id, { onDelete: 'cascade' }),
+  userId: varchar('user_id', { length: 64 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
   title: varchar('title', { length: 255 }).notNull(),
   body: text('body').notNull(),
   read: boolean('read').notNull().default(false),
-  created_at: timestamp('created_at', { withTimezone: true }).default(sql`now()`).notNull(),
-}, (t) => [
-  index('notifications_user_id_idx').on(t.user_id),
-  index('notifications_read_idx').on(t.read),
-]);
-
+  createdAt: timestamp('created_at', { withTimezone: true }).default(sql`now()`).notNull(),
+}, (t) => [index('notifications_user_idx').on(t.userId)]);

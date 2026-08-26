@@ -2,17 +2,14 @@
 import { useState, type CSSProperties } from 'react';
 import { Outlet, createRootRoute, HeadContent, Scripts } from '@tanstack/react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { PRIMARY_COLOR, siteDescription, siteTitle } from '@/app/constants';
+import { primaryColor, siteDescription, siteTitle } from '@/app/constants';
 import { AnalyticsTracker } from '@/app/firebase';
 import appCss from '@/app/styles.css?url';
 import { ShopProvider } from '@/app/components/shop-provider';
-import { getAssetUrlsFn, getLocaleFn, getSessionFn } from '@/app/api';
+import { getSessionFn } from '@/app/api/auth';
 
 export const Route = createRootRoute({
-  loader: async () => {
-    const [session, locale, assets] = await Promise.all([getSessionFn(), getLocaleFn(), getAssetUrlsFn()]);
-    return { ...session, locale, assets };
-  },
+  loader: async () => getSessionFn(),
   head: () => ({
     links: [
       { rel: 'stylesheet', href: appCss },
@@ -23,7 +20,7 @@ export const Route = createRootRoute({
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       { title: siteTitle() },
       { name: 'description', content: siteDescription },
-      { name: 'theme-color', content: PRIMARY_COLOR },
+      { name: 'theme-color', content: primaryColor },
       { name: 'robots', content: 'index, follow' },
     ],
   }),
@@ -47,9 +44,11 @@ function RootComponent() {
   const initial = Route.useLoaderData();
   const [client] = useState(() => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 30_000 } } });
-    queryClient.setQueryData(['session'], { user: initial.user });
-    queryClient.setQueryData(['locale'], initial.locale);
-    queryClient.setQueryData(['assets'], initial.assets);
+    queryClient.setQueryData(['session'], {
+      user: initial.user,
+      locale: initial.locale,
+      assets: initial.assets,
+    });
     return queryClient;
   });
   return (

@@ -6,7 +6,7 @@ import Image from '@/app/components/image';
 import { useShop } from '@/app/components/shop-provider';
 import { pageHead } from '@/app/constants';
 import { useSuggestedProductsQuery } from '@/app/queries';
-import { getProductFn } from '@/app/api';
+import { getProductFn } from '@/app/api/products';
 
 export const Route = createFileRoute('/products/$slug')({
   loader: async ({ params }) => {

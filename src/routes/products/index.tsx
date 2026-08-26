@@ -5,7 +5,7 @@ import ProductCard from '@/app/components/product-card';
 import { productsPageSize, pageHead } from '@/app/constants';
 import { toProductQuery, useProductsInfiniteQuery } from '@/app/queries';
 import type { ProductSearch } from '@/app/types';
-import { getCategoriesFn, getProductsFn } from '@/app/api';
+import { getCategoriesFn, getProductsFn } from '@/app/api/products';
 
 export const Route = createFileRoute('/products/')({
   validateSearch: (search: Record<string, unknown>): ProductSearch => ({

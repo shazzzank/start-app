@@ -11,8 +11,9 @@ import {
 } from '@/app/queries';
 import {
   deleteNotificationFn, deleteOrderFn, deleteProductFn, deleteUserFn,
-  markNotificationReadFn, updateOrderStatusFn,
-} from '@/app/api';
+} from '@/app/api/admin';
+import { markNotificationReadFn } from '@/app/api/notifications';
+import { updateOrderStatusFn } from '@/app/api/orders';
 
 type AdminPanel = 'products' | 'orders' | 'users' | 'alerts';
 

@@ -1,7 +1,7 @@
 import { getRequestHeader, getRequestIP } from '@tanstack/react-start/server';
-import type { ShopCurrency, ShopLocale } from '@/app/types';
+import type { Currency, Locale } from '@/app/types';
 
-const countryCurrency: Record<string, ShopCurrency> = {
+const countryCurrency: Record<string, Currency> = {
   IN: 'INR', US: 'USD', GB: 'GBP', CA: 'CAD', AU: 'AUD', NZ: 'AUD',
   JP: 'JPY', KR: 'KRW', SG: 'SGD', AE: 'AED', SA: 'AED', QA: 'AED',
   DE: 'EUR', FR: 'EUR', IT: 'EUR', ES: 'EUR', NL: 'EUR', BE: 'EUR', AT: 'EUR',
@@ -10,7 +10,7 @@ const countryCurrency: Record<string, ShopCurrency> = {
   MX: 'USD', BR: 'USD', PH: 'USD', MY: 'SGD', TH: 'SGD', HK: 'USD', TW: 'USD',
 };
 
-const ratesFromInr: Record<ShopCurrency, number> = {
+const ratesFromInr: Record<Currency, number> = {
   INR: 1,
   USD: 0.012,
   EUR: 0.011,
@@ -23,7 +23,7 @@ const ratesFromInr: Record<ShopCurrency, number> = {
   AED: 0.044,
 };
 
-const currencyLocale: Record<ShopCurrency, string> = {
+const currencyLocale: Record<Currency, string> = {
   INR: 'en-IN',
   USD: 'en-US',
   EUR: 'de-DE',
@@ -36,9 +36,9 @@ const currencyLocale: Record<ShopCurrency, string> = {
   AED: 'en-AE',
 };
 
-const zeroDecimal = new Set<ShopCurrency>(['INR', 'JPY', 'KRW']);
+const zeroDecimal = new Set<Currency>(['INR', 'JPY', 'KRW']);
 const defaultCountry = 'IN';
-const defaultCurrency: ShopCurrency = 'INR';
+const defaultCurrency: Currency = 'INR';
 
 function isPrivateIp(ip: string) {
   if (ip) {
@@ -78,20 +78,20 @@ async function countryFromIp(ip: string) {
   return defaultCountry;
 }
 
-export function currencyForCountry(country: string): ShopCurrency {
+export function currencyForCountry(country: string): Currency {
   return countryCurrency[country.toUpperCase()] ?? defaultCurrency;
 }
 
-export async function resolveShopLocale(): Promise<ShopLocale> {
+export async function resolveLocale(): Promise<Locale> {
   const edgeCountry = edgeCountryCode();
   const country = edgeCountry ?? await countryFromIp(getRequestIP({ xForwardedFor: true }) ?? '');
   return { country, currency: currencyForCountry(country) };
 }
 
-export function formatPrice(amountInInr: number, currency: ShopCurrency) {
+export function formatPrice(amount: number, currency: Currency) {
   const converted = zeroDecimal.has(currency)
-    ? Math.round(amountInInr * ratesFromInr[currency])
-    : Math.round(amountInInr * ratesFromInr[currency] * 100) / 100;
+    ? Math.round(amount * ratesFromInr[currency])
+    : Math.round(amount * ratesFromInr[currency] * 100) / 100;
   return new Intl.NumberFormat(currencyLocale[currency], {
     style: 'currency',
     currency,

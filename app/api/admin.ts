@@ -12,7 +12,7 @@ import {
 import { db } from '@/app/server/db';
 import { invalidateProductsCache } from '@/app/server/products-cache';
 import {
-  cartItems, notifications, orderItems, orders, products, sessions, shopUsers, wishlistItems,
+  cart, notifications, orders, products, sessions, users, wishlist,
 } from '@/app/server/schema';
 import { mapProduct } from '@/app/server/product';
 
@@ -21,9 +21,9 @@ export const getAdminStatsFn = createServerFn({ method: 'GET' }).handler(async (
   if (user) {
     const [productCount] = await db.select({ count: sql<number>`count(*)::int` }).from(products);
     const [orderCount] = await db.select({ count: sql<number>`count(*)::int` }).from(orders);
-    const [userCount] = await db.select({ count: sql<number>`count(*)::int` }).from(shopUsers);
+    const [userCount] = await db.select({ count: sql<number>`count(*)::int` }).from(users);
     const [unread] = await db.select({ count: sql<number>`count(*)::int` }).from(notifications)
-      .where(and(eq(notifications.user_id, user.id), eq(notifications.read, false)));
+      .where(and(eq(notifications.userId, user.id), eq(notifications.read, false)));
     return {
       products: productCount?.count ?? 0,
       orders: orderCount?.count ?? 0,
@@ -38,12 +38,12 @@ export const getAdminUsersFn = createServerFn({ method: 'GET' }).handler(async (
   const user = await requireUser(['admin']);
   if (user) {
     const rows = await db.select({
-      id: shopUsers.id,
-      name: shopUsers.name,
-      email: shopUsers.email,
-      role: shopUsers.role,
-      createdAt: shopUsers.created_at,
-    }).from(shopUsers).orderBy(asc(shopUsers.name));
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      role: users.role,
+      createdAt: users.createdAt,
+    }).from(users).orderBy(asc(users.name));
     return rows.map((row) => ({
       id: row.id,
       name: row.name,
@@ -63,19 +63,15 @@ export const deleteProductFn = createServerFn({ method: 'POST' })
       if (isSafeSlug(data.slug)) {
         const [product] = await db.select().from(products).where(eq(products.slug, data.slug)).limit(1);
         if (product) {
-          const [ordered] = await db.select({ id: orderItems.id }).from(orderItems).where(eq(orderItems.product_id, product.id)).limit(1);
-          if (!ordered) {
-            try {
-              await db.delete(cartItems).where(eq(cartItems.product_id, product.id));
-              await db.delete(wishlistItems).where(eq(wishlistItems.product_id, product.id));
-              await db.delete(products).where(eq(products.id, product.id));
-              await invalidateProductsCache();
-              return { ok: true as const };
-            } catch {
-              return { ok: false as const, message: 'Could not delete product' };
-            }
+          try {
+            await db.delete(cart).where(eq(cart.productId, product.id));
+            await db.delete(wishlist).where(eq(wishlist.productId, product.id));
+            await db.delete(products).where(eq(products.id, product.id));
+            await invalidateProductsCache();
+            return { ok: true as const };
+          } catch {
+            return { ok: false as const, message: 'Could not delete product' };
           }
-          return { ok: false as const, message: 'Product is linked to past orders' };
         }
       }
       return { ok: false as const, message: 'Product not found' };
@@ -89,7 +85,6 @@ export const deleteOrderFn = createServerFn({ method: 'POST' })
     const user = await requireUser(['admin']);
     if (user) {
       try {
-        await db.delete(orderItems).where(eq(orderItems.order_id, data.orderId));
         const deleted = await db.delete(orders).where(eq(orders.id, data.orderId)).returning({ id: orders.id });
         if (deleted.length) return { ok: true as const };
         return { ok: false as const, message: 'Order not found' };
@@ -105,21 +100,16 @@ export const deleteUserFn = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const user = await requireUser(['admin']);
     if (user && user.id !== data.userId) {
-      const [target] = await db.select().from(shopUsers).where(eq(shopUsers.id, data.userId)).limit(1);
+      const [target] = await db.select().from(users).where(eq(users.id, data.userId)).limit(1);
       if (target) {
         const [otherAdmin] = target.role === 'admin'
-          ? await db.select({ id: shopUsers.id }).from(shopUsers)
-            .where(and(eq(shopUsers.role, 'admin'), ne(shopUsers.id, data.userId))).limit(1)
+          ? await db.select({ id: users.id }).from(users)
+            .where(and(eq(users.role, 'admin'), ne(users.id, data.userId))).limit(1)
           : [target];
         if (otherAdmin) {
           try {
-            const userOrders = await db.select({ id: orders.id }).from(orders).where(eq(orders.user_id, data.userId));
-            for (const order of userOrders) {
-              await db.delete(orderItems).where(eq(orderItems.order_id, order.id));
-              await db.delete(orders).where(eq(orders.id, order.id));
-            }
-            await db.delete(sessions).where(eq(sessions.user_id, data.userId));
-            const removed = await db.delete(shopUsers).where(eq(shopUsers.id, data.userId)).returning({ id: shopUsers.id });
+            await db.delete(sessions).where(eq(sessions.userId, data.userId));
+            const removed = await db.delete(users).where(eq(users.id, data.userId)).returning({ id: users.id });
             if (removed.length) return { ok: true as const };
             return { ok: false as const, message: 'Could not delete user' };
           } catch {
@@ -140,7 +130,7 @@ export const deleteNotificationFn = createServerFn({ method: 'POST' })
     if (user) {
       try {
         const removed = await db.delete(notifications)
-          .where(and(eq(notifications.id, data.id), eq(notifications.user_id, user.id)))
+          .where(and(eq(notifications.id, data.id), eq(notifications.userId, user.id)))
           .returning({ id: notifications.id });
         if (removed.length) return { ok: true as const };
         return { ok: false as const, message: 'Notification not found' };

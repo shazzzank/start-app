@@ -4,15 +4,15 @@ import { and, eq } from 'drizzle-orm';
 import { isSafeSlug } from '@/app/lib/utils';
 import { requireUser } from '@/app/server/auth';
 import { db } from '@/app/server/db';
-import { products, wishlistItems } from '@/app/server/schema';
+import { products, wishlist } from '@/app/server/schema';
 import { mapProduct } from '@/app/server/product';
 
 export const getWishlistFn = createServerFn({ method: 'GET' }).handler(async () => {
   const user = await requireUser(['customer']);
   if (user) {
-    const rows = await db.select({ product: products }).from(wishlistItems)
-      .innerJoin(products, eq(wishlistItems.product_id, products.id))
-      .where(eq(wishlistItems.user_id, user.id));
+    const rows = await db.select({ product: products }).from(wishlist)
+      .innerJoin(products, eq(wishlist.productId, products.id))
+      .where(eq(wishlist.userId, user.id));
     return rows.map((row) => mapProduct(row.product));
   }
   return [];
@@ -25,13 +25,13 @@ export const toggleWishlistFn = createServerFn({ method: 'POST' })
     if (user && isSafeSlug(data.slug)) {
       const [product] = await db.select().from(products).where(eq(products.slug, data.slug)).limit(1);
       if (product) {
-        const [existing] = await db.select().from(wishlistItems)
-          .where(and(eq(wishlistItems.user_id, user.id), eq(wishlistItems.product_id, product.id))).limit(1);
+        const [existing] = await db.select().from(wishlist)
+          .where(and(eq(wishlist.userId, user.id), eq(wishlist.productId, product.id))).limit(1);
         if (existing) {
-          await db.delete(wishlistItems).where(eq(wishlistItems.id, existing.id));
+          await db.delete(wishlist).where(eq(wishlist.id, existing.id));
           return { ok: true as const, saved: false };
         }
-        await db.insert(wishlistItems).values({ id: crypto.randomUUID(), user_id: user.id, product_id: product.id });
+        await db.insert(wishlist).values({ id: crypto.randomUUID(), userId: user.id, productId: product.id });
         return { ok: true as const, saved: true };
       }
     }

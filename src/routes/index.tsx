@@ -5,7 +5,7 @@ import ProductCard from '@/app/components/product-card';
 import Image from '@/app/components/image';
 import { useShop } from '@/app/components/shop-provider';
 import { pageHead, siteDescription } from '@/app/constants';
-import { getCategoryStatsFn, getProductsFn } from '@/app/api';
+import { getCategoryStatsFn, getProductsFn } from '@/app/api/products';
 
 export const Route = createFileRoute('/')({
   loader: async () => {

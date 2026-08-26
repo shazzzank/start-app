@@ -54,9 +54,9 @@ export function trackPageView(path: string, title?: string) {
 }
 
 export function trackButton(name: string) {
-  const button_name = name.replace(/\s+/g, ' ').trim().slice(0, 100);
-  button_name && void analyticsClient().then((client) => {
-    client && logEvent(client, namedEvent(button_name), { button_name });
+  const buttonName = name.replace(/\s+/g, ' ').trim().slice(0, 100);
+  buttonName && void analyticsClient().then((client) => {
+    client && logEvent(client, namedEvent(buttonName), { button_name: buttonName });
   });
 }
 

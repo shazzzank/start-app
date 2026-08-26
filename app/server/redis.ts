@@ -1,10 +1,10 @@
 import Redis from 'ioredis';
-import { REDIS_URL } from '@/app/constants';
+import { redisUrl } from '@/app/constants';
 
-const redis = new Redis(REDIS_URL, {
+const redis = new Redis(redisUrl, {
   maxRetriesPerRequest: 2,
   enableReadyCheck: false,
-  ...(REDIS_URL.startsWith('rediss://') ? { tls: {} } : {}),
+  ...(redisUrl.startsWith('rediss://') ? { tls: {} } : {}),
 });
 
 export async function redisGet(key: string) {

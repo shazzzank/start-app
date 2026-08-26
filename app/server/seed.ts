@@ -1,8 +1,8 @@
 import { eq } from 'drizzle-orm';
-import type { ProductCategory, SeedProduct } from '@/app/types';
-import { hashPassword } from '@/app/server/auth';
+import type { Product, ProductCategory } from '@/app/types';
+import { adminEmail, hashPassword } from '@/app/server/auth';
 import { db } from '@/app/server/db';
-import { products, sessions, shopUsers } from '@/app/server/schema';
+import { products, sessions, users } from '@/app/server/schema';
 
 const categoryDefaults: Record<ProductCategory, string> = {
   Stationery: '/products/stationery/notebook.jpg',
@@ -137,7 +137,7 @@ function slugify(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
-const baseProducts: SeedProduct[] = [
+const baseProducts: Omit<Product, 'id'>[] = [
   {
     slug: 'hanji-field-notebook',
     name: 'Hanji Field Notebook',
@@ -201,7 +201,7 @@ const baseProducts: SeedProduct[] = [
 ];
 
 function buildCatalog() {
-  const catalog: SeedProduct[] = [...baseProducts];
+  const catalog: Omit<Product, 'id'>[] = [...baseProducts];
   const usedSlugs = new Set(catalog.map((item) => item.slug));
   (Object.keys(categoryStems) as ProductCategory[]).forEach((category) => {
     categoryStems[category].forEach((stem, index) => {
@@ -231,7 +231,7 @@ function buildCatalog() {
   return catalog;
 }
 
-export const catalog = buildCatalog();
+const catalog = buildCatalog();
 
 let seeded = false;
 
@@ -245,25 +245,25 @@ export async function ensureSeed() {
   }
 
   {
-    const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+    const email = adminEmail();
     const adminPassword = process.env.ADMIN_PASSWORD;
-    if (adminEmail && adminPassword) {
-      const [legacy] = await db.select({ id: shopUsers.id }).from(shopUsers).where(eq(shopUsers.email, 'admin@start.local')).limit(1);
+    if (email && adminPassword) {
+      const [legacy] = await db.select({ id: users.id }).from(users).where(eq(users.email, 'admin@start.local')).limit(1);
       if (legacy) {
-        await db.delete(sessions).where(eq(sessions.user_id, legacy.id));
-        await db.delete(shopUsers).where(eq(shopUsers.id, legacy.id));
+        await db.delete(sessions).where(eq(sessions.userId, legacy.id));
+        await db.delete(users).where(eq(users.id, legacy.id));
       }
       const passwordHash = hashPassword(adminPassword);
-      const [admin] = await db.select().from(shopUsers).where(eq(shopUsers.role, 'admin')).limit(1);
+      const [admin] = await db.select().from(users).where(eq(users.role, 'admin')).limit(1);
       if (admin) {
-        admin.email !== adminEmail && await db.delete(sessions).where(eq(sessions.user_id, admin.id));
-        await db.update(shopUsers).set({ name: 'Admin', email: adminEmail, password_hash: passwordHash }).where(eq(shopUsers.id, admin.id));
+        admin.email !== email && await db.delete(sessions).where(eq(sessions.userId, admin.id));
+        await db.update(users).set({ name: 'Admin', email, password: passwordHash }).where(eq(users.id, admin.id));
       } else {
-        await db.insert(shopUsers).values({
+        await db.insert(users).values({
           id: crypto.randomUUID(),
           name: 'Admin',
-          email: adminEmail,
-          password_hash: passwordHash,
+          email,
+          password: passwordHash,
           role: 'admin',
         });
       }

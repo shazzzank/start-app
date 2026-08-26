@@ -7,7 +7,8 @@ import { useShop } from '@/app/components/shop-provider';
 import { productImageMaxBytes, productImageMimeTypes, pageHead } from '@/app/constants';
 import { fileToBase64 } from '@/app/lib/utils';
 import type { ProductImageMime } from '@/app/types';
-import { getProductFn, removeProductImageFn, updateProductFn, uploadProductImageFn } from '@/app/api';
+import { removeProductImageFn, updateProductFn, uploadProductImageFn } from '@/app/api/admin';
+import { getProductFn } from '@/app/api/products';
 
 export const Route = createFileRoute('/admin/products/$slug/edit')({
   loader: async ({ params }) => {

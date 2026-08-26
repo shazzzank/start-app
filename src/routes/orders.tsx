@@ -18,9 +18,9 @@ export const Route = createFileRoute('/orders')({
 
 function OrdersPage() {
   const { user, removeFromCart, placeOrder, price } = useShop();
-  const { data: cartItems = [] } = useCartQuery(!!user);
+  const { data: cart = [] } = useCartQuery(!!user);
   const { data: orders = [] } = useOrdersQuery(!!user);
-  const cartTotal = cartItems.reduce((sum, row) => sum + row.product.price * row.qty, 0);
+  const cartTotal = cart.reduce((sum, row) => sum + row.product.price * row.qty, 0);
 
   if (user?.role === 'customer') {
     return (
@@ -34,9 +34,9 @@ function OrdersPage() {
             <div className='grid gap-8 lg:grid-cols-2'>
               <section className='box'>
                 <h2 className='h4'>Current cart</h2>
-                {cartItems.length ? (
+                {cart.length ? (
                   <>
-                    {cartItems.map(({ qty, product }) => (
+                    {cart.map(({ qty, product }) => (
                       <div key={product.slug} className='item'>
                         <div>
                           <p className='h4'>{product.name}</p>

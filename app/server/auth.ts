@@ -4,14 +4,15 @@ import { eq, and, gt } from 'drizzle-orm';
 import { environment } from '@/app/constants';
 import { db } from '@/app/server/db';
 import { redisExpire, redisIncr } from '@/app/server/redis';
-import { sessions, shopUsers } from '@/app/server/schema';
+import { sessions, users } from '@/app/server/schema';
+import type { UserRole } from '@/app/types';
 
 const sessionCookie = 'start_session';
 const sessionDays = 7;
 const sessionMaxAge = sessionDays * 24 * 60 * 60;
 const isProduction = process.env.NODE_ENV === 'production';
 
-export function adminEmailFromEnv() {
+export function adminEmail() {
   return process.env.ADMIN_EMAIL?.trim().toLowerCase() ?? '';
 }
 
@@ -74,22 +75,22 @@ export async function getSessionUser() {
   if (sessionId) {
     const rows = await db
       .select({
-        id: shopUsers.id,
-        name: shopUsers.name,
-        email: shopUsers.email,
-        role: shopUsers.role,
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: users.role,
       })
       .from(sessions)
-      .innerJoin(shopUsers, eq(sessions.user_id, shopUsers.id))
-      .where(and(eq(sessions.id, sessionId), gt(sessions.expires_at, new Date())))
+      .innerJoin(users, eq(sessions.userId, users.id))
+      .where(and(eq(sessions.id, sessionId), gt(sessions.expiresAt, new Date())))
       .limit(1);
     return rows[0] ?? null;
   }
   return null;
 }
 
-export async function requireUser(roles?: Array<'customer' | 'admin'>) {
+export async function requireUser(roles?: UserRole[]) {
   const user = await getSessionUser();
-  if (user && (!roles || roles.includes(user.role as 'customer' | 'admin'))) return user;
+  if (user && (!roles || roles.includes(user.role as UserRole))) return user;
   return null;
 }
