@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { v2 as cloudinary } from 'cloudinary';
 import { eq } from 'drizzle-orm';
-import { environment } from '@/app/constants';
+import { cloudinaryCloudName, environment, requiredEnv } from '@/app/constants';
 import { db, logger } from '@/app/server/db';
 import { redisGet, redisIncr, redisSet } from '@/app/server/redis';
 import { products } from '@/app/server/schema';
@@ -18,27 +18,17 @@ const categoryDefaults: Record<string, string> = {
 };
 const genericKeywords = new Set(['set', 'kit', 'pack', 'sample', 'roll', 'block', 'cover', 'holder', 'stand']);
 
-function cloudName() {
-  return process.env.CLOUDINARY_CLOUD_NAME ?? '';
-}
-
-function configured() {
-  return !!(cloudName() && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
-}
-
 function ensureConfig() {
   cloudinary.config({
-    cloud_name: cloudName(),
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
+    cloud_name: cloudinaryCloudName,
+    api_key: requiredEnv('CLOUDINARY_API_KEY'),
+    api_secret: requiredEnv('CLOUDINARY_API_SECRET'),
     secure: true,
   });
 }
 
 export function cloudinaryDeliveryUrl(publicId: string, resourceType: 'image' | 'raw' = 'image') {
-  const name = cloudName();
-  if (name) return `https://res.cloudinary.com/${name}/${resourceType}/upload/f_auto,q_auto/${publicId}`;
-  return '';
+  return `https://res.cloudinary.com/${cloudinaryCloudName}/${resourceType}/upload/f_auto,q_auto/${publicId}`;
 }
 
 export function publicIdFromUrl(url: string) {
@@ -73,12 +63,10 @@ export async function uploadImageBuffer(buffer: Buffer, publicId: string) {
 }
 
 export async function deleteCloudinaryImage(urlOrPublicId: string) {
-  if (configured()) {
-    const publicId = urlOrPublicId.includes('cloudinary.com') ? publicIdFromUrl(urlOrPublicId) : urlOrPublicId;
-    if (publicId?.startsWith(assetPrefix)) {
-      ensureConfig();
-      await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
-    }
+  const publicId = urlOrPublicId.includes('cloudinary.com') ? publicIdFromUrl(urlOrPublicId) : urlOrPublicId;
+  if (publicId?.startsWith(assetPrefix)) {
+    ensureConfig();
+    await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
   }
 }
 
@@ -95,7 +83,7 @@ export async function getAssetUrls() {
   const fontPrimary = await redisGet(`${environment}:assets:font-primary`);
   const fontSecondary = await redisGet(`${environment}:assets:font-secondary`);
   return {
-    fallback: fallback ?? (cloudName() ? cloudinaryDeliveryUrl(`${assetPrefix}/fallback`) : '/fallback.svg'),
+    fallback: fallback ?? cloudinaryDeliveryUrl(`${assetPrefix}/fallback`),
     fontPrimary: fontPrimary ?? '',
     fontSecondary: fontSecondary ?? '',
   };
@@ -147,7 +135,7 @@ async function uploadCatalogImage(publicId: string, localPath: string, keyword: 
 }
 
 async function migrateProductImages() {
-  if (configured() && process.env.PEXELS_API_KEY && !(await redisGet(pexelsMigratedKey))) {
+  if (process.env.PEXELS_API_KEY && !(await redisGet(pexelsMigratedKey))) {
     const rows = await db.select({
       slug: products.slug,
       name: products.name,
@@ -162,10 +150,7 @@ async function migrateProductImages() {
       url && await db.update(products).set({ image: url }).where(eq(products.slug, row.slug));
     }
 
-    const fallbackPath = path.join(process.cwd(), 'public', 'fallback.svg');
-    const fallback = fs.existsSync(fallbackPath)
-      ? await uploadLocalAsset(fallbackPath, `${assetPrefix}/fallback`)
-      : await uploadCatalogImage(`${assetPrefix}/fallback`, 'fallback.svg', 'product', 'fallback');
+    const fallback = await uploadCatalogImage(`${assetPrefix}/fallback`, '', 'product', 'fallback');
     fallback && await redisSet(`${environment}:assets:fallback`, fallback);
 
     await redisIncr(`${environment}:products:ver`);
@@ -174,11 +159,9 @@ async function migrateProductImages() {
 }
 
 export async function ensureCloudinaryAssets() {
-  if (configured()) {
-    try {
-      await migrateProductImages();
-    } catch (err) {
-      logger.error('Cloudinary migration failed', { err });
-    }
+  try {
+    await migrateProductImages();
+  } catch (err) {
+    logger.error('Cloudinary migration failed', { err });
   }
 }

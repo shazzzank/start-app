@@ -2,7 +2,8 @@ import { createFileRoute, useNavigate, useRouterState } from '@tanstack/react-ro
 import { useEffect, useRef, useState } from 'react';
 import Page from '@/app/components/page';
 import ProductCard from '@/app/components/product-card';
-import { productsPageSize, pageHead } from '@/app/constants';
+import { productsPageSize } from '@/app/constants';
+import { pageHead } from '@/app/lib/utils';
 import { toProductQuery, useProductsInfiniteQuery } from '@/app/queries';
 import type { ProductSearch } from '@/app/types';
 import { getCategoriesFn, getProductsFn } from '@/app/api/products';

@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'path';
 import winston from 'winston';
 import { Pool } from 'pg';
@@ -12,6 +13,18 @@ const pool = new Pool({
   ...(isLocalDb ? {} : { ssl: { rejectUnauthorized: false } }),
 });
 export const db = drizzle(pool);
+
+const transports: winston.transport[] = [new winston.transports.Console()];
+if (process.env.NODE_ENV !== 'production') {
+  const logsDir = path.join(process.cwd(), 'logs');
+  fs.mkdirSync(logsDir, { recursive: true });
+  transports.push(new winston.transports.File({
+    filename: path.join(logsDir, 'app.log'),
+    maxsize: 10 * 1024 * 1024,
+    maxFiles: 5,
+  }));
+}
+
 export const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
@@ -25,14 +38,5 @@ export const logger = winston.createLogger({
       })
     )
   ),
-  transports: process.env.NODE_ENV === 'production'
-    ? [new winston.transports.Console()]
-    : [
-        new winston.transports.Console(),
-        new winston.transports.File({
-          filename: path.join(process.cwd(), 'logs/app.log'),
-          maxsize: 10 * 1024 * 1024,
-          maxFiles: 5,
-        }),
-      ],
+  transports,
 });

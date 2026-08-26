@@ -4,7 +4,7 @@ import Page from '@/app/components/page';
 import ProductCard from '@/app/components/product-card';
 import Image from '@/app/components/image';
 import { useShop } from '@/app/components/shop-provider';
-import { pageHead } from '@/app/constants';
+import { pageHead } from '@/app/lib/utils';
 import { useSuggestedProductsQuery } from '@/app/queries';
 import { getProductFn } from '@/app/api/products';
 

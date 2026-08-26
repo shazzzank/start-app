@@ -1,5 +1,4 @@
 import { useEffect, useState, type ComponentProps } from 'react';
-import { fallbackImage } from '@/app/constants';
 import { optimizeImageUrl } from '@/app/lib/images';
 
 type Props = {
@@ -18,8 +17,9 @@ export default function Image({
   loading = 'lazy',
   ...props
 }: Props) {
-  const [url, setUrl] = useState(optimizeImageUrl(src?.trim() || fallbackImage));
-  useEffect(() => { setUrl(optimizeImageUrl(src?.trim() || fallbackImage)); }, [src]);
+  const [url, setUrl] = useState(() => (src?.trim() ? optimizeImageUrl(src.trim()) : ''));
+  useEffect(() => { setUrl(src?.trim() ? optimizeImageUrl(src.trim()) : ''); }, [src]);
+  if (!url) return null;
   return (
     <img
       {...props}
@@ -28,7 +28,7 @@ export default function Image({
       className={className}
       loading={loading}
       decoding='async'
-      onError={() => url !== fallbackImage && setUrl(fallbackImage)}
+      onError={() => setUrl('')}
     />
   );
 }

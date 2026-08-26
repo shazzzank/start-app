@@ -4,7 +4,8 @@ import Page from '@/app/components/page';
 import ProductCard from '@/app/components/product-card';
 import Image from '@/app/components/image';
 import { useShop } from '@/app/components/shop-provider';
-import { pageHead, siteDescription } from '@/app/constants';
+import { siteDescription } from '@/app/constants';
+import { pageHead } from '@/app/lib/utils';
 import { getCategoryStatsFn, getProductsFn } from '@/app/api/products';
 
 export const Route = createFileRoute('/')({

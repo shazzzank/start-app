@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { asc } from 'drizzle-orm';
-import { absoluteUrl } from '@/app/constants';
+import { absoluteUrl } from '@/app/lib/utils';
 import { db } from '@/app/server/db';
 import { ensureCloudinaryAssets } from '@/app/server/cloudinary';
 import { products } from '@/app/server/schema';

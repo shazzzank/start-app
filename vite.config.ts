@@ -5,15 +5,19 @@ import tailwindcss from '@tailwindcss/vite';
 import viteReact from '@vitejs/plugin-react';
 import { nitro } from 'nitro/vite';
 
+function required(fileEnv: Record<string, string>, name: string) {
+  const value = (process.env[name] || fileEnv[name] || '').trim();
+  if (value) return value;
+  throw new Error(`Missing required env: ${name}`);
+}
+
 export default defineConfig(({ mode }) => {
   const fileEnv = loadEnv(mode, process.cwd(), '');
-  const appEnv = process.env.APP_ENV
-    || fileEnv.APP_ENV
-    || (mode === 'production' || process.env.NODE_ENV === 'production' ? 'production' : 'local');
+  const appEnv = required(fileEnv, 'APP_ENV');
+  const port = Number(required(fileEnv, 'PORT'));
+  if (!Number.isFinite(port)) throw new Error('PORT must be a number');
   return {
-    server: {
-      port: Number(process.env.PORT || fileEnv.PORT || 3000),
-    },
+    server: { port },
     resolve: {
       alias: { '@': path.resolve(__dirname, './') },
       tsconfigPaths: true,

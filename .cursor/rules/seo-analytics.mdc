@@ -7,11 +7,11 @@ alwaysApply: true
 
 When adding or editing routes/pages in this app:
 
-1. **Every route** must use `pageHead({ title?, description, path, noindex? })` from `@/app/constants`. Essentials only: title, meta description (≤160 chars), canonical URL, and `noindex` on private pages. Do not add Open Graph, Twitter cards, or JSON-LD unless explicitly requested.
+1. **Every route** must use `pageHead({ title?, description, path, noindex? })` from `@/app/lib/utils`. Essentials only: title, meta description (≤160 chars), canonical URL, and `noindex` on private pages. Do not add Open Graph, Twitter cards, or JSON-LD unless explicitly requested.
 2. **Title rules:** format is always `{topic} · Start` via `siteTitle` / `pageHead` — never brand alone. Home uses `homeTitle` (“Curated stationery, home, bags & wear · Start”). Keep under ~60 characters; long product names truncate inside `siteTitle`.
 3. **Description rules:** one unique sentence (~120–160 chars). Product pages can use `summary` (or `description`). No filler boilerplate.
 4. **Public vs private:** indexable pages = `/`, `/products`, `/products/$slug`. Account, cart/orders, wishlist, alerts, login, and admin must pass `noindex: true`. Search-result shop URLs (`?q=`) also use `noindex`.
-5. **Crawl aids:** keep `/robots.txt` and `/sitemap.xml` in sync when public paths change. Set `SITE_URL` in production when the public origin differs from the Vercel hostname.
+5. **Crawl aids:** keep `/robots.txt` and `/sitemap.xml` in sync when public paths change. Set `SITE_URL` in production (required; no Vercel hostname fallback).
 6. **Do not remove** `AnalyticsTracker` from `app/firebase.ts` (keep it mounted in `src/routes/__root.tsx`) — it fires `page_view` on navigation and `button_click` for `button` / `a.btn`.
 7. Interactive CTAs should use `@/app/components/button` (class `btn`) or a native `<button>` so clicks are tracked. Do not invent a parallel analytics path.
 8. Firebase web config lives in `VITE_FIREBASE_*` (local `.env` + Vercel) and is read only from `app/firebase.ts`. Do **not** re-inject Firebase keys in `vite.config.ts` `define`.

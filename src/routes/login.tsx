@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import Button from '@/app/components/button';
 import Page from '@/app/components/page';
 import { useShop } from '@/app/components/shop-provider';
-import { pageHead } from '@/app/constants';
+import { pageHead } from '@/app/lib/utils';
 
 export const Route = createFileRoute('/login')({
   head: () => pageHead({

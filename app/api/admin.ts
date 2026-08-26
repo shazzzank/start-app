@@ -14,7 +14,7 @@ import { invalidateProductsCache } from '@/app/server/products-cache';
 import {
   cart, notifications, orders, products, sessions, users, wishlist,
 } from '@/app/server/schema';
-import { mapProduct } from '@/app/server/product';
+import { mapProduct } from '@/app/lib/images';
 
 export const getAdminStatsFn = createServerFn({ method: 'GET' }).handler(async () => {
   const user = await requireUser(['admin']);

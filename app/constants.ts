@@ -1,12 +1,16 @@
-export const environment = process.env.APP_ENV
-  ?? (process.env.NODE_ENV === 'production' ? 'production' : 'local');
-export const databaseUrl = process.env.DATABASE_URL ?? 'postgresql://moses@127.0.0.1/start';
-const redisUrlRaw = process.env.REDIS_URL ?? 'redis://localhost:6379';
-const redisUrlMatched = redisUrlRaw.match(/(rediss?:\/\/\S+)/)?.[1] ?? redisUrlRaw;
-export const redisUrl = redisUrlMatched.includes('upstash.io')
-  ? redisUrlMatched.replace(/^redis:\/\//, 'rediss://')
-  : redisUrlMatched;
-export const port = Number(process.env.PORT ?? 3000);
+function requiredEnv(name: string) {
+  const value = process.env[name]?.trim();
+  if (value) return value;
+  throw new Error(`Missing required env: ${name}`);
+}
+
+export const environment = requiredEnv('APP_ENV');
+export const databaseUrl = requiredEnv('DATABASE_URL');
+export const redisUrl = requiredEnv('REDIS_URL');
+export const port = Number(requiredEnv('PORT'));
+if (!Number.isFinite(port)) throw new Error('PORT must be a number');
+export const cloudinaryCloudName = requiredEnv('CLOUDINARY_CLOUD_NAME');
+export const siteUrl = requiredEnv('SITE_URL').replace(/\/$/, '');
 export const tablePrefix = 'start_api_';
 export const productsPageSize = 24;
 export const productsCacheTtl = 60;
@@ -14,49 +18,9 @@ export const categoriesCacheTtl = 300;
 export const productDetailCacheTtl = 120;
 export const productImageMaxBytes = 5 * 1024 * 1024;
 export const productImageMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const;
-
 export const primaryColor = '#00141a';
 export const siteName = 'Start';
 export const siteDescription = 'Shop curated stationery, home goods, bags, and wear from Seoul and Osaka. Small-batch essentials with live stock and tracked orders.';
 export const homeTitle = 'Curated stationery, home, bags & wear';
-export const fallbackImage = '/fallback.svg';
 
-export const siteTitle = (page?: string) => {
-  const label = page ?? homeTitle;
-  const budget = 60 - siteName.length - 3;
-  const clipped = label.length > budget ? `${label.slice(0, Math.max(1, budget - 1)).trimEnd()}…` : label;
-  return `${clipped} · ${siteName}`;
-};
-
-export function absoluteUrl(path = '/') {
-  const origin = typeof window !== 'undefined'
-    ? window.location.origin
-    : (process.env.SITE_URL?.replace(/\/$/, '')
-      || (process.env.VERCEL_PROJECT_PRODUCTION_URL && `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`)
-      || (process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`)
-      || `http://localhost:${port}`);
-  if (path && path !== '/') return `${origin}${path.startsWith('/') ? path : `/${path}`}`;
-  return origin;
-}
-
-export function metaDescription(text: string) {
-  const cleaned = text.replace(/\s+/g, ' ').trim();
-  return cleaned.length > 160 ? `${cleaned.slice(0, 157).trimEnd()}…` : cleaned;
-}
-
-export function pageHead(opts: {
-  title?: string;
-  description: string;
-  path: string;
-  noindex?: boolean;
-}) {
-  const meta: Array<Record<string, unknown>> = [
-    { title: siteTitle(opts.title) },
-    { name: 'description', content: metaDescription(opts.description) },
-  ];
-  opts.noindex && meta.push({ name: 'robots', content: 'noindex, nofollow' });
-  return {
-    meta,
-    links: [{ rel: 'canonical', href: absoluteUrl(opts.path) }],
-  };
-}
+export { requiredEnv };

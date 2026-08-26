@@ -12,7 +12,7 @@ import { productsCacheVer } from '@/app/server/products-cache';
 import { rememberJsonCache } from '@/app/server/redis';
 import { products } from '@/app/server/schema';
 import { ensureSeed } from '@/app/server/seed';
-import { mapProduct } from '@/app/server/product';
+import { mapProduct } from '@/app/lib/images';
 
 export const getProductsFn = createServerFn({ method: 'GET' })
   .validator(z.object({

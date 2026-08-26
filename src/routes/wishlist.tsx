@@ -3,7 +3,7 @@ import Button from '@/app/components/button';
 import EmptyState from '@/app/components/empty-state';
 import Page from '@/app/components/page';
 import { useShop } from '@/app/components/shop-provider';
-import { pageHead } from '@/app/constants';
+import { pageHead } from '@/app/lib/utils';
 import { useWishlistQuery } from '@/app/queries';
 
 export const Route = createFileRoute('/wishlist')({

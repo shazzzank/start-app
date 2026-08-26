@@ -2,7 +2,8 @@
 import { useState, type CSSProperties } from 'react';
 import { Outlet, createRootRoute, HeadContent, Scripts } from '@tanstack/react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { primaryColor, siteDescription, siteTitle } from '@/app/constants';
+import { primaryColor, siteDescription } from '@/app/constants';
+import { siteTitle } from '@/app/lib/utils';
 import { AnalyticsTracker } from '@/app/firebase';
 import appCss from '@/app/styles.css?url';
 import { ShopProvider } from '@/app/components/shop-provider';

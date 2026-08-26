@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { absoluteUrl } from '@/app/constants';
+import { absoluteUrl } from '@/app/lib/utils';
 
 export const Route = createFileRoute('/robots.txt')({
   server: {

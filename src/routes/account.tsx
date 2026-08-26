@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { pageHead } from '@/app/constants';
+import { pageHead } from '@/app/lib/utils';
 
 export const Route = createFileRoute('/account')({
   head: () => pageHead({

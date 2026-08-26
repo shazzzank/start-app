@@ -2,7 +2,7 @@ import { Navigate, createFileRoute } from '@tanstack/react-router';
 import Button from '@/app/components/button';
 import Page from '@/app/components/page';
 import { useShop } from '@/app/components/shop-provider';
-import { pageHead } from '@/app/constants';
+import { pageHead } from '@/app/lib/utils';
 import { useNotificationsQuery } from '@/app/queries';
 import { markNotificationReadFn } from '@/app/api/notifications';
 

@@ -5,7 +5,7 @@ import { isSafeSlug } from '@/app/lib/utils';
 import { requireUser } from '@/app/server/auth';
 import { db } from '@/app/server/db';
 import { cart, products } from '@/app/server/schema';
-import { mapProduct } from '@/app/server/product';
+import { mapProduct } from '@/app/lib/images';
 
 export const getCartFn = createServerFn({ method: 'GET' }).handler(async () => {
   const user = await requireUser(['customer']);

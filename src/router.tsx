@@ -1,5 +1,5 @@
 import { createRouter } from '@tanstack/react-router';
-import { absoluteUrl } from '@/app/constants';
+import { absoluteUrl } from '@/app/lib/utils';
 import { routeTree } from '@/src/routeTree.gen';
 
 export function getRouter() {

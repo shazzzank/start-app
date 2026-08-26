@@ -1,19 +1,16 @@
-function cloudName() {
-  return process.env.CLOUDINARY_CLOUD_NAME ?? '';
-}
+import type { Product } from '@/app/types';
+import { cloudinaryCloudName } from '@/app/constants';
 
 export function resolveProductImageUrl(src: string) {
-  const name = cloudName();
-  if (src.startsWith('/products/') && name) {
+  if (src.startsWith('/products/')) {
     const publicId = `start${src.replace(/\.[^.]+$/, '')}`;
-    return `https://res.cloudinary.com/${name}/image/upload/f_auto,q_auto/${publicId}`;
+    return `https://res.cloudinary.com/${cloudinaryCloudName}/image/upload/f_auto,q_auto/${publicId}`;
   }
   return src;
 }
 
 export function isCloudinaryImageUrl(value: string) {
-  const name = cloudName();
-  return !!name && value.startsWith(`https://res.cloudinary.com/${name}/`);
+  return value.startsWith(`https://res.cloudinary.com/${cloudinaryCloudName}/`);
 }
 
 export function optimizeImageUrl(src: string, width = 900) {
@@ -22,4 +19,28 @@ export function optimizeImageUrl(src: string, width = 900) {
     return src.replace('/upload/', `/upload/f_auto,q_auto,w_${width},c_limit/`);
   }
   return src;
+}
+
+export function mapProduct(row: {
+  id: string;
+  slug: string;
+  name: string;
+  category: string;
+  summary: string;
+  description: string;
+  price: number;
+  stock: number;
+  image: string;
+}): Product {
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    category: row.category,
+    summary: row.summary,
+    description: row.description,
+    price: row.price,
+    stock: row.stock,
+    image: resolveProductImageUrl(row.image),
+  };
 }
